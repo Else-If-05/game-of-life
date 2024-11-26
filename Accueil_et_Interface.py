@@ -4,6 +4,19 @@ import numpy as np
 
 # Initialiser Pygame
 pygame.init()
+def initialiser_matrice():
+    # Demander à l'utilisateur la taille de la grille
+    try:
+        taille = int(input("Veuillez entrer la taille de la grille (N pour une grille NxN) : "))
+        if taille < 50:
+            raise ValueError("La taille doit être plus grande que 50.")
+    except ValueError as e:
+        print("Entrée invalide. La taille doit être un entier positif.")
+        """taille = 50  # Valeur par défaut si l'entrée est invalide"""
+    return taille
+
+
+
 
 # Définir les paramètres de la grille
 TAILLE_GRILLE = 10  # Nombre de cellules par côté
