@@ -75,25 +75,4 @@ def demander_regles():
         }
 
 
-# Demander à l'utilisateur la taille de la grille
-while True:
-    taille = int(input("Veuillez entrer la taille de la grille (N pour une grille NxN) : "))
-    if taille >= 10:
-        print("Grille initialisée.")
-        break
-
-# Initialisation de la grille
-grille = initialiser_grille(taille)
-
-# Demander les règles
-regles = demander_regles()
-
-# Nombre d'itérations
-iterations = 10
-
-# Affichage de l'évolution de la grille
-for i in range(iterations):
-    print(f"Étape {i + 1}:")
-    afficher_grille(grille)
-    grille = appliquer_regles(grille, regles)
-    time.sleep(0.5)  # Pause pour voir l'évolution
+#J'AI COPIE LA SUITE DU CODE DANS LE MAIN. SEVIM

@@ -1,32 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import moteur
+
 
 # ---- Fonctions principales ---- #
 
-def compter_voisins(grille, x, y):
-    """Compte le nombre de voisins vivants pour une cellule."""
-    voisins = [
-        (-1, -1), (-1, 0), (-1, 1),
-        (0, -1),           (0, 1),
-        (1, -1), (1, 0), (1, 1)
-    ]
-    total = sum(grille[(x + dx) % grille.shape[0], (y + dy) % grille.shape[1]] for dx, dy in voisins)
-    return total
-
-def appliquer_regles(grille):
-    """Applique les règles de l'automate à la grille."""
-    nouvelle_grille = grille.copy()
-    for x in range(grille.shape[0]):
-        for y in range(grille.shape[1]):
-            voisins_vivants = compter_voisins(grille, x, y)
-            if grille[x, y] == 1:
-                if voisins_vivants < 2 or voisins_vivants > 3:
-                    nouvelle_grille[x, y] = 0
-            else:
-                if voisins_vivants == 3:
-                    nouvelle_grille[x, y] = 1
-    return nouvelle_grille
 
 def analyser_structures(grille):
     """Analyse les structures simples dans la grille."""
@@ -40,7 +19,7 @@ def analyser_structures(grille):
             # Autres structures peuvent être ajoutées ici
     return blocs, oscillateurs
 
-def evolution_cellules(grille_initiale, steps):
+def evolution_cellules(grille_initiale, steps, regles):
     """Simule l'évolution de la grille sur plusieurs étapes et trace l'évolution des cellules vivantes."""
     grille = grille_initiale.copy()
     cellules_vivantes = []
@@ -55,7 +34,7 @@ def evolution_cellules(grille_initiale, steps):
         blocs_temps.append(blocs)
 
         # Passer à l'état suivant
-        grille = appliquer_regles(grille)
+        grille = moteur.appliquer_regles(grille, regles)
 
     # Tracer les graphes
     plt.figure(figsize=(10, 6))
@@ -68,7 +47,7 @@ def evolution_cellules(grille_initiale, steps):
     plt.grid()
     plt.show()
 
-def temps_de_calcul_par_taille(max_taille, steps):
+def temps_de_calcul_par_taille(max_taille, steps, regles):
     """Calcule le temps de calcul pour différentes tailles de grille."""
     tailles = range(10, max_taille + 1, 10)
     temps = []
@@ -78,7 +57,7 @@ def temps_de_calcul_par_taille(max_taille, steps):
         debut = time.time()
 
         for _ in range(steps):
-            grille = appliquer_regles(grille)
+            grille = moteur.appliquer_regles(grille, regles)
 
         temps.append(time.time() - debut)
 
@@ -94,19 +73,4 @@ def temps_de_calcul_par_taille(max_taille, steps):
 
 # ---- Programme Principal ---- #
 
-def main():
-    # Paramètres
-    taille_grille = 50  # Taille de la grille (50x50)
-    steps = 100  # Nombre d'étapes pour la simulation
 
-    # Grille initiale aléatoire
-    grille_initiale = np.random.randint(2, size=(taille_grille, taille_grille))
-
-    print("Simulation de l'évolution des cellules...")
-    evolution_cellules(grille_initiale, steps)
-
-    print("\nCalcul du temps de calcul en fonction de la taille de la grille...")
-    temps_de_calcul_par_taille(100, steps)
-
-if __name__ == "__main__":
-    main()
