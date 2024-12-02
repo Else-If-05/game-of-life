@@ -33,28 +33,66 @@ def demander_taille_grille():
             print("Erreur : Veuillez entrer un nombre entier valide.")
 
 
-def demander_regles():
-    """Demande à l'utilisateur de modifier les règles ou utilise les valeurs par défaut."""
-    print("Voulez-vous changer les règles du jeu ? (o/n)")
-    choix = input("> ").lower()
-    if choix == 'o':
-        try:
-            min_vivants = int(input("Nombre minimum de voisins pour survivre : "))
-            max_vivants = int(input("Nombre maximum de voisins pour survivre : "))
-            revient_a_la_vie = int(input("Nombre exact de voisins pour revenir à la vie : "))
-            return {
-                'min_vivants': min_vivants,
-                'max_vivants': max_vivants,
-                'revient_a_la_vie': revient_a_la_vie
-            }
-        except ValueError:
-            print("Entrée invalide. Les règles par défaut seront utilisées.")
-    return {
-        'min_vivants': 2,  # Par défaut
-        'max_vivants': 3,  # Par défaut
-        'revient_a_la_vie': 3  # Par défaut
-    }
+def demander_regles(fenetre):
+    input_boxes = [
+        {'rect': pygame.Rect(300, 200, 200, 50), 'text': '', 'label': 'Min voisins pour survivre :'},
+        {'rect': pygame.Rect(300, 300, 200, 50), 'text': '', 'label': 'Max voisins pour survivre :'},
+        {'rect': pygame.Rect(300, 400, 200, 50), 'text': '', 'label': 'Voisins pour revivre :'}
+    ]
+    bouton_valider = pygame.Rect(350, 500, 100, 50)
+    font = pygame.font.Font(None, 36)
+    active_box = None
+    running = True
 
+    while running:
+        fenetre.fill(COULEUR_FOND)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    for box in input_boxes:
+                        if box['rect'].collidepoint(event.pos):
+                            active_box = box
+                    if bouton_valider.collidepoint(event.pos):
+                        try:
+                            min_vivants = int(input_boxes[0]['text'])
+                            max_vivants = int(input_boxes[1]['text'])
+                            revient_a_la_vie = int(input_boxes[2]['text'])
+                            return {
+                                'min_vivants': min_vivants,
+                                'max_vivants': max_vivants,
+                                'revient_a_la_vie': revient_a_la_vie
+                            }
+                        except ValueError:
+                            print("Entrée invalide. Les règles par défaut seront utilisées.")
+                            return {
+                                'min_vivants': 2,
+                                'max_vivants': 3,
+                                'revient_a_la_vie': 3
+                            }
+            elif event.type == pygame.KEYDOWN:
+                if active_box:
+                    if event.key == pygame.K_RETURN:
+                        active_box = None
+                    elif event.key == pygame.K_BACKSPACE:
+                        active_box['text'] = active_box['text'][:-1]
+                    else:
+                        active_box['text'] += event.unicode
+
+        for box in input_boxes:
+            pygame.draw.rect(fenetre, COULEUR_BOUTON, box['rect'], 2)
+            label_surface = font.render(box['label'], True, COULEUR_TEXTE)
+            fenetre.blit(label_surface, (box['rect'].x - 250, box['rect'].y + 10))
+            text_surface = font.render(box['text'], True, COULEUR_TEXTE)
+            fenetre.blit(text_surface, (box['rect'].x + 5, box['rect'].y + 10))
+
+        pygame.draw.rect(fenetre, COULEUR_BOUTON, bouton_valider)
+        valider_surface = font.render("Valider", True, COULEUR_TEXTE)
+        fenetre.blit(valider_surface, (bouton_valider.x + 10, bouton_valider.y + 10))
+
+        pygame.display.flip()
 
 # Fonction pour dessiner un bouton
 def dessiner_bouton(fenetre, rect, texte, survole):
@@ -192,10 +230,11 @@ def boucle_jeu(taille_grille, regles):
 # Programme principal
 if __name__ == "__main__":
     TAILLE_GRILLE = demander_taille_grille()
-    REGLES = demander_regles()
 
     screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
     pygame.display.set_caption("Jeu de la Vie")
+
+    REGLES = demander_regles(screen)  # Pass the Pygame window to the function
 
     while True:
         action = afficher_accueil()
