@@ -1,6 +1,8 @@
 import pygame
 import sys
 import numpy as np
+import save
+import random
 
 # Initialiser Pygame
 pygame.init()
@@ -10,10 +12,10 @@ WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
 DARK_GRAY = (150, 150, 150)
 BLACK = (0, 0, 0)
-COULEUR_FOND = (34, 139, 34)
+COULEUR_FOND = (240, 248, 255)
 COULEUR_BOUTON = (70, 130, 180)
 COULEUR_BOUTON_SURVOL = (100, 149, 237)
-COULEUR_TEXTE = WHITE
+COULEUR_TEXTE = (0, 0, 0)
 
 # Police
 font = pygame.font.Font(None, 48)
@@ -40,7 +42,7 @@ def demander_regles(fenetre):
         {'rect': pygame.Rect(300, 400, 200, 50), 'text': '', 'label': 'Voisins pour revivre :'}
     ]
     bouton_valider = pygame.Rect(350, 500, 100, 50)
-    font = pygame.font.Font(None, 36)
+    font = pygame.font.Font(None, 25)
     active_box = None
     running = True
 
@@ -103,11 +105,11 @@ def dessiner_bouton(fenetre, rect, texte, survole):
     fenetre.blit(texte_surface, texte_rect)
 
 
-# Fonction pour afficher l'écran d'accueil
 def afficher_accueil():
     boutons = [
         {'rect': pygame.Rect(200, 150, 300, 60), 'text': "Nouvelle Partie"},
-        {'rect': pygame.Rect(200, 250, 300, 60), 'text': "Quitter"}
+        {'rect': pygame.Rect(200, 250, 300, 60), 'text': "Charger une Partie"},
+        {'rect': pygame.Rect(200, 350, 300, 60), 'text': "Quitter"}
     ]
 
     accueil = True
@@ -127,6 +129,9 @@ def afficher_accueil():
                         if bouton['rect'].collidepoint(event.pos):
                             if bouton['text'] == "Nouvelle Partie":
                                 return "new_game"
+                            if bouton['text'] == "Charger une Partie":
+
+                                return "load_game"
                             elif bouton['text'] == "Quitter":
                                 pygame.quit()
                                 sys.exit()
@@ -136,6 +141,7 @@ def afficher_accueil():
             dessiner_bouton(screen, bouton['rect'], bouton['text'], survole)
 
         pygame.display.flip()
+
 
 
 # Fonction pour dessiner la grille
@@ -176,10 +182,24 @@ def compter_voisins(grille, x, y):
     return total
 
 
+
+def remplir_grille_aleatoire(grille, taux_remplissage=0.2):
+    """Remplir la grille de manière aléatoire avec des cellules vivantes"""
+    for x in range(grille.shape[0]):
+        for y in range(grille.shape[1]):
+            grille[x, y] = 1 if random.random() < taux_remplissage else 0
+    return grille
+
+
+
 # Fonction principale du jeu
+
+
+# Fonction principale du jeu
+# Dans boucle_jeu
 def boucle_jeu(taille_grille, regles):
-    taille_cellule = 800 // taille_grille
-    grille = np.zeros((taille_grille, taille_grille), dtype=int)
+    taille_cellule = 800 // taille_grille  # Taille des cellules
+    grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Initialisation de la grille
     running = True
     auto_mode = False
     clock = pygame.time.Clock()
@@ -188,13 +208,16 @@ def boucle_jeu(taille_grille, regles):
         screen.fill(COULEUR_FOND)
         dessiner_grille(screen, grille, taille_cellule)
 
-        # Afficher boutons de contrôle
-        boutons = []
-        bouton_reset = pygame.Rect(850, 50, 140, 50)
-        bouton_step = pygame.Rect(850, 120, 140, 50)
-        bouton_auto = pygame.Rect(850, 190, 140, 50)
-        boutons.extend([("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto)])
+        bouton_quitter = pygame.Rect(850, 330, 140, 50)
+        boutons = [
+            ("reset", pygame.Rect(850, 50, 140, 50)),
+            ("step", pygame.Rect(850, 120, 140, 50)),
+            ("auto", pygame.Rect(850, 190, 140, 50)),
+            ("save", pygame.Rect(850, 260, 140, 50)),
+            ("quit", bouton_quitter)
+        ]
 
+        # Affichage des boutons
         for nom, bouton in boutons:
             texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
             dessiner_bouton(screen, bouton, texte, bouton.collidepoint(pygame.mouse.get_pos()))
@@ -209,22 +232,103 @@ def boucle_jeu(taille_grille, regles):
                     for nom, bouton in boutons:
                         if bouton.collidepoint(event.pos):
                             if nom == "reset":
-                                grille = np.zeros((taille_grille, taille_grille), dtype=int)
+                                grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Réinitialiser la grille
                             elif nom == "step":
-                                grille = appliquer_regles(grille, regles)
+                                grille = appliquer_regles(grille, regles)  # Appliquer les règles
                             elif nom == "auto":
-                                auto_mode = not auto_mode
+                                # Si la grille est vide, remplir aléatoirement
+                                if np.sum(grille) == 0:  # Vérifier si toutes les cellules sont mortes
+                                    grille = remplir_grille_aleatoire(grille, taux_remplissage=0.2)  # Remplir aléatoirement
+                                auto_mode = not auto_mode  # Basculer le mode automatique
+                            elif nom == "save":
+                                nom_fichier = save.demander_nom_fichier(screen)
+                                if nom_fichier:
+                                    save.save_game(nom_fichier + ".json", grille, regles)  # Sauvegarder le jeu
+                            elif nom == "quit":  # Quitter et revenir au menu principal
+                                return "quit"
+
+                # Basculer l'état des cellules lors du clic dans la grille
                 x, y = event.pos
                 if x < 800 and y < 800:  # Clic dans la grille
                     x //= taille_cellule
                     y //= taille_cellule
-                    grille[x, y] = 1 - grille[x, y]
+                    grille[x, y] = 1 - grille[x, y]  # Alterner l'état de la cellule entre 0 et 1
 
+        # Mode automatique : appliquer les règles en continu
         if auto_mode:
             grille = appliquer_regles(grille, regles)
-            pygame.time.delay(300)
+            pygame.time.delay(300)  # Délai pour contrôler la vitesse du mode automatique
 
-        clock.tick(60)
+        clock.tick(60)  # Limiter la fréquence à 60 FPS
+
+# Fonction principale du jeu après chargement
+def boucle_jeu_load(grille, regles):
+    taille_grille = grille.shape[0]  # Taille de la grille déjà chargée
+    taille_cellule = 800 // taille_grille  # Calcul de la taille de chaque cellule
+
+    if grille is None:
+        print("Erreur lors du chargement de la grille.")
+        return "quit"
+
+    running = True
+    auto_mode = False
+    clock = pygame.time.Clock()
+
+    while running:
+        screen.fill(COULEUR_FOND)
+        dessiner_grille(screen, grille, taille_cellule)  # Dessiner la grille
+
+        # Ajouter le bouton Quitter et autres boutons
+        bouton_quitter = pygame.Rect(850, 330, 140, 50)  # Position du bouton Quitter
+        boutons = [
+            ("reset", pygame.Rect(850, 50, 140, 50)),
+            ("step", pygame.Rect(850, 120, 140, 50)),
+            ("auto", pygame.Rect(850, 190, 140, 50)),
+            ("save", pygame.Rect(850, 260, 140, 50)),
+            ("quit", bouton_quitter)  # Ajouter le bouton Quitter
+        ]
+
+        # Afficher les boutons
+        for nom, bouton in boutons:
+            texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
+            dessiner_bouton(screen, bouton, texte, bouton.collidepoint(pygame.mouse.get_pos()))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Clic gauche
+                    for nom, bouton in boutons:
+                        if bouton.collidepoint(event.pos):
+                            if nom == "reset":
+                                grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Réinitialiser la grille
+                            elif nom == "step":
+                                grille = appliquer_regles(grille, regles)  # Appliquer les règles
+                            elif nom == "auto":
+                                auto_mode = not auto_mode  # Basculer le mode automatique
+                            elif nom == "save":
+                                # Demander à l'utilisateur un nom de fichier pour sauvegarder le jeu
+                                nom_fichier = save.demander_nom_fichier(screen)
+                                if nom_fichier:
+                                    save.save_game(nom_fichier + ".json", grille, regles)  # Sauvegarder le jeu
+                            elif nom == "quit":  # Quitter et revenir à l'écran d'accueil
+                                return "quit"  # Retour à l'écran d'accueil
+
+                # Basculer l'état de la cellule lors du clic sur la grille
+                x, y = event.pos
+                if x < 800 and y < 800:  # Clic à l'intérieur de la grille
+                    x //= taille_cellule
+                    y //= taille_cellule
+                    grille[x, y] = 1 - grille[x, y]  # Basculer l'état de la cellule entre 0 et 1
+
+        # Mode automatique : appliquer continuellement les règles
+        if auto_mode:
+            grille = appliquer_regles(grille, regles)
+            pygame.time.delay(300)  # Délai pour contrôler la vitesse du mode automatique
+
+        clock.tick(60)  # Limiter la fréquence d'images à 60 FPS
 
 
 # Programme principal
@@ -234,9 +338,21 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
     pygame.display.set_caption("Jeu de la Vie")
 
-    REGLES = demander_regles(screen)  # Pass the Pygame window to the function
+    REGLES = demander_regles(screen)
 
     while True:
         action = afficher_accueil()
         if action == "new_game":
             boucle_jeu(TAILLE_GRILLE, REGLES)
+        elif action == "load_game":
+
+            nom_fichier = save.demander_nom_fichier(screen)  # Demande à l'utilisateur de saisir un nom de fichier
+            if nom_fichier :
+                result = save.load_game(nom_fichier + ".json")
+                if result:
+                    grille, regles = result  # Récuperer la grille et les règles chargées
+                    boucle_jeu_load(grille, regles)  # Lancer le jeu avec les données chargées
+            else:
+                print("Nom de fichier non valide.")
+        elif action == "quit":
+            continue  # Retour à l'écran d'accueil
