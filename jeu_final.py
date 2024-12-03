@@ -20,7 +20,6 @@ font = pygame.font.Font(None, 48)
 font_small = pygame.font.Font(None, 36)
 
 
-
 def demander_regles(fenetre):
     input_boxes = [
         {'rect': pygame.Rect(300, 200, 200, 50), 'text': '', 'label': 'Min voisins pour survivre :'},
@@ -32,10 +31,13 @@ def demander_regles(fenetre):
     font = pygame.font.Font(None, 25)
     active_box = None
     running = True
-    titre_surface = font.render("Changez les paramètres si vous le souhaitez, sinon cliquez directement sur valider",True, COULEUR_TEXTE)
+    titre_surface = font.render("Changez les paramètres si vous le souhaitez, sinon cliquez directement sur valider", True, COULEUR_TEXTE)
+    instruction_surface = font.render("Veuillez entrer les règles du jeu :", True, COULEUR_TEXTE)
 
     while running:
         fenetre.fill(COULEUR_FOND)
+        fenetre.blit(titre_surface, (50, 50))
+        fenetre.blit(instruction_surface, (300, 150))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -83,7 +85,6 @@ def demander_regles(fenetre):
         fenetre.blit(valider_surface, (bouton_valider.x + 10, bouton_valider.y + 10))
 
         pygame.display.flip()
-
 # Fonction pour dessiner un bouton
 def dessiner_bouton(fenetre, rect, texte, survole):
     couleur = COULEUR_BOUTON_SURVOL if survole else COULEUR_BOUTON
