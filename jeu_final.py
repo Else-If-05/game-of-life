@@ -103,11 +103,11 @@ def dessiner_bouton(fenetre, rect, texte, survole):
     fenetre.blit(texte_surface, texte_rect)
 
 
-# Fonction pour afficher l'écran d'accueil
 def afficher_accueil():
     boutons = [
         {'rect': pygame.Rect(200, 150, 300, 60), 'text': "Nouvelle Partie"},
-        {'rect': pygame.Rect(200, 250, 300, 60), 'text': "Quitter"}
+        {'rect': pygame.Rect(200, 250, 300, 60), 'text': "Charger une Partie"},
+        {'rect': pygame.Rect(200, 350, 300, 60), 'text': "Quitter"}
     ]
 
     accueil = True
@@ -127,6 +127,8 @@ def afficher_accueil():
                         if bouton['rect'].collidepoint(event.pos):
                             if bouton['text'] == "Nouvelle Partie":
                                 return "new_game"
+                            if bouton['text'] == "Charger une Partie":
+                                return "load_game"
                             elif bouton['text'] == "Quitter":
                                 pygame.quit()
                                 sys.exit()
@@ -136,7 +138,6 @@ def afficher_accueil():
             dessiner_bouton(screen, bouton['rect'], bouton['text'], survole)
 
         pygame.display.flip()
-
 
 # Fonction pour dessiner la grille
 def dessiner_grille(fenetre, grille, taille_cellule):
