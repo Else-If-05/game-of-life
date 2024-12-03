@@ -20,18 +20,6 @@ font = pygame.font.Font(None, 48)
 font_small = pygame.font.Font(None, 36)
 
 
-def demander_taille_grille():
-    """Demande une taille de grille valide (>50) à l'utilisateur."""
-    while True:
-        try:
-            taille = int(input("Entrez la taille de la grille (doit être >50) : "))
-            if taille > 50:
-                return taille
-            else:
-                print("Erreur : La taille doit être supérieure à 50.")
-        except ValueError:
-            print("Erreur : Veuillez entrer un nombre entier valide.")
-
 
 def demander_regles(fenetre):
     input_boxes = [
@@ -39,10 +27,12 @@ def demander_regles(fenetre):
         {'rect': pygame.Rect(300, 300, 200, 50), 'text': '', 'label': 'Max voisins pour survivre :'},
         {'rect': pygame.Rect(300, 400, 200, 50), 'text': '', 'label': 'Voisins pour revivre :'}
     ]
+
     bouton_valider = pygame.Rect(350, 500, 100, 50)
     font = pygame.font.Font(None, 25)
     active_box = None
     running = True
+    titre_surface = font.render("Changez les paramètres si vous le souhaitez, sinon cliquez directement sur valider",True, COULEUR_TEXTE)
 
     while running:
         fenetre.fill(COULEUR_FOND)
@@ -226,12 +216,70 @@ def boucle_jeu(taille_grille, regles):
             pygame.time.delay(300)
 
         clock.tick(60)
+def demander_taille(fenetre):
+    input_boxes = [
+        {'rect': pygame.Rect(300, 200, 200, 50), 'text': '', 'label': 'Taille de la map:'},
+    ]
+    bouton_valider = pygame.Rect(350, 500, 100, 50)
+    font = pygame.font.Font(None, 25)
+    active_box = None
+    error_message = ""
+    running = True
+
+    while running:
+        fenetre.fill(COULEUR_FOND)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    for box in input_boxes:
+                        if box['rect'].collidepoint(event.pos):
+                            active_box = box
+                    if bouton_valider.collidepoint(event.pos):
+                        try:
+                            taille = int(input_boxes[0]['text'])
+                            if taille >= 50:
+                                return taille
+                            else:
+                                error_message = "La taille doit être >= 50."
+                        except ValueError:
+                            error_message = "Entrée invalide. Veuillez entrer un nombre entier."
+            elif event.type == pygame.KEYDOWN:
+                if active_box:
+                    if event.key == pygame.K_RETURN:
+                        active_box = None
+                    elif event.key == pygame.K_BACKSPACE:
+                        active_box['text'] = active_box['text'][:-1]
+                    else:
+                        active_box['text'] += event.unicode
+
+        # Dessiner les boîtes d'entrée
+        for box in input_boxes:
+            pygame.draw.rect(fenetre, COULEUR_BOUTON, box['rect'], 2)
+            label_surface = font.render(box['label'], True, COULEUR_TEXTE)
+            fenetre.blit(label_surface, (box['rect'].x - 250, box['rect'].y + 10))
+            text_surface = font.render(box['text'], True, COULEUR_TEXTE)
+            fenetre.blit(text_surface, (box['rect'].x + 5, box['rect'].y + 10))
+
+        # Dessiner le bouton Valider
+        pygame.draw.rect(fenetre, COULEUR_BOUTON, bouton_valider)
+        valider_surface = font.render("Valider", True, COULEUR_TEXTE)
+        fenetre.blit(valider_surface, (bouton_valider.x + 10, bouton_valider.y + 10))
+
+        # Afficher le message d'erreur s'il existe
+        if error_message:
+            error_surface = font.render(error_message, True, (255, 0, 0))  # Texte rouge pour l'erreur
+            fenetre.blit(error_surface, (300, 300))  # Position du message d'erreur
+
+        pygame.display.flip()
+
+
 
 
 # Programme principal
 if __name__ == "__main__":
-    TAILLE_GRILLE = demander_taille_grille()
-
     screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
     pygame.display.set_caption("Jeu de la Vie")
 
@@ -239,7 +287,7 @@ if __name__ == "__main__":
     while True:
         action = afficher_accueil()
         if action == "new_game":
-
+            TAILLE_GRILLE = demander_taille(screen)
 
             REGLES = demander_regles(screen)  # Pass the Pygame window to the function
             boucle_jeu(TAILLE_GRILLE, REGLES)
