@@ -181,10 +181,11 @@ def boucle_jeu(taille_grille, regles):
 
         # Afficher boutons de contrôle
         boutons = []
-        bouton_reset = pygame.Rect(850, 50, 140, 50)
-        bouton_step = pygame.Rect(850, 120, 140, 50)
-        bouton_auto = pygame.Rect(850, 190, 140, 50)
-        boutons.extend([("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto)])
+        bouton_random = pygame.Rect(850, 50, 140, 50)
+        bouton_reset = pygame.Rect(850, 120, 140, 50)
+        bouton_step = pygame.Rect(850, 230, 140, 50)
+        bouton_auto = pygame.Rect(850, 300, 140, 50)
+        boutons.extend([("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random)])
 
         for nom, bouton in boutons:
             texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
