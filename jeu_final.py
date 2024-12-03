@@ -10,10 +10,10 @@ WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
 DARK_GRAY = (150, 150, 150)
 BLACK = (0, 0, 0)
-COULEUR_FOND = (34, 139, 34)
+COULEUR_FOND = (240, 248, 255)
 COULEUR_BOUTON = (70, 130, 180)
 COULEUR_BOUTON_SURVOL = (100, 149, 237)
-COULEUR_TEXTE = WHITE
+COULEUR_TEXTE = (0, 0, 0)
 
 # Police
 font = pygame.font.Font(None, 48)
@@ -40,7 +40,7 @@ def demander_regles(fenetre):
         {'rect': pygame.Rect(300, 400, 200, 50), 'text': '', 'label': 'Voisins pour revivre :'}
     ]
     bouton_valider = pygame.Rect(350, 500, 100, 50)
-    font = pygame.font.Font(None, 36)
+    font = pygame.font.Font(None, 25)
     active_box = None
     running = True
 
@@ -234,9 +234,11 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
     pygame.display.set_caption("Jeu de la Vie")
 
-    REGLES = demander_regles(screen)  # Pass the Pygame window to the function
 
     while True:
         action = afficher_accueil()
         if action == "new_game":
+
+
+            REGLES = demander_regles(screen)  # Pass the Pygame window to the function
             boucle_jeu(TAILLE_GRILLE, REGLES)
