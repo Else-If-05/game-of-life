@@ -167,6 +167,8 @@ def compter_voisins(grille, x, y):
     return total
 
 
+import numpy as np  # Assurez-vous que numpy est importé
+
 # Fonction principale du jeu
 def boucle_jeu(taille_grille, regles):
     taille_cellule = 800 // taille_grille
@@ -206,6 +208,8 @@ def boucle_jeu(taille_grille, regles):
                                 grille = appliquer_regles(grille, regles)
                             elif nom == "auto":
                                 auto_mode = not auto_mode
+                            elif nom == "random":  # Ajouter une grille aléatoire
+                                grille = np.random.randint(2, size=(taille_grille, taille_grille))
                 x, y = event.pos
                 if x < 800 and y < 800:  # Clic dans la grille
                     x //= taille_cellule
@@ -217,6 +221,9 @@ def boucle_jeu(taille_grille, regles):
             pygame.time.delay(300)
 
         clock.tick(60)
+
+
+
 def demander_taille(fenetre):
     input_boxes = [
         {'rect': pygame.Rect(300, 200, 200, 50), 'text': '', 'label': 'Taille de la map:'},
