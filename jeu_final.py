@@ -1,8 +1,6 @@
 import pygame
 import sys
 import numpy as np
-import save
-import random
 
 # Initialiser Pygame
 pygame.init()
@@ -22,32 +20,24 @@ font = pygame.font.Font(None, 48)
 font_small = pygame.font.Font(None, 36)
 
 
-def demander_taille_grille():
-    """Demande une taille de grille valide (>50) à l'utilisateur."""
-    while True:
-        try:
-            taille = int(input("Entrez la taille de la grille (doit être >50) : "))
-            if taille > 50:
-                return taille
-            else:
-                print("Erreur : La taille doit être supérieure à 50.")
-        except ValueError:
-            print("Erreur : Veuillez entrer un nombre entier valide.")
-
-
 def demander_regles(fenetre):
     input_boxes = [
         {'rect': pygame.Rect(300, 200, 200, 50), 'text': '', 'label': 'Min voisins pour survivre :'},
         {'rect': pygame.Rect(300, 300, 200, 50), 'text': '', 'label': 'Max voisins pour survivre :'},
         {'rect': pygame.Rect(300, 400, 200, 50), 'text': '', 'label': 'Voisins pour revivre :'}
     ]
+
     bouton_valider = pygame.Rect(350, 500, 100, 50)
     font = pygame.font.Font(None, 25)
     active_box = None
     running = True
+    titre_surface = font.render("Changez les paramètres si vous le souhaitez, sinon cliquez directement sur valider", True, COULEUR_TEXTE)
+    instruction_surface = font.render("Veuillez entrer les règles du jeu :", True, COULEUR_TEXTE)
 
     while running:
         fenetre.fill(COULEUR_FOND)
+        fenetre.blit(titre_surface, (50, 50))
+        fenetre.blit(instruction_surface, (300, 150))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -95,7 +85,6 @@ def demander_regles(fenetre):
         fenetre.blit(valider_surface, (bouton_valider.x + 10, bouton_valider.y + 10))
 
         pygame.display.flip()
-
 # Fonction pour dessiner un bouton
 def dessiner_bouton(fenetre, rect, texte, survole):
     couleur = COULEUR_BOUTON_SURVOL if survole else COULEUR_BOUTON
@@ -141,8 +130,6 @@ def afficher_accueil():
 
         pygame.display.flip()
 
-
-
 # Fonction pour dessiner la grille
 def dessiner_grille(fenetre, grille, taille_cellule):
     for x in range(grille.shape[0]):
@@ -181,21 +168,12 @@ def compter_voisins(grille, x, y):
     return total
 
 
-
-def remplir_grille_aleatoire(grille, taux_remplissage=0.2):
-    for x in range(grille.shape[0]):
-        for y in range(grille.shape[1]):
-            grille[x, y] = 1 if random.random() < taux_remplissage else 0
-    return grille
-
-
-
+import numpy as np  # Assurez-vous que numpy est importé
 
 # Fonction principale du jeu
-# Dans boucle_jeu
 def boucle_jeu(taille_grille, regles):
-    taille_cellule = 800 // taille_grille  # Taille des cellules
-    grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Initialisation de la grille
+    taille_cellule = 800 // taille_grille
+    grille = np.zeros((taille_grille, taille_grille), dtype=int)
     running = True
     auto_mode = False
     clock = pygame.time.Clock()
@@ -204,16 +182,14 @@ def boucle_jeu(taille_grille, regles):
         screen.fill(COULEUR_FOND)
         dessiner_grille(screen, grille, taille_cellule)
 
-        bouton_quitter = pygame.Rect(850, 330, 140, 50)
-        boutons = [
-            ("reset", pygame.Rect(850, 50, 140, 50)),
-            ("step", pygame.Rect(850, 120, 140, 50)),
-            ("auto", pygame.Rect(850, 190, 140, 50)),
-            ("save", pygame.Rect(850, 260, 140, 50)),
-            ("quit", bouton_quitter)
-        ]
+        # Afficher boutons de contrôle
+        boutons = []
+        bouton_random = pygame.Rect(850, 50, 140, 50)
+        bouton_reset = pygame.Rect(850, 120, 140, 50)
+        bouton_step = pygame.Rect(850, 230, 140, 50)
+        bouton_auto = pygame.Rect(850, 300, 140, 50)
+        boutons.extend([("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random)])
 
-        # Affichage des boutons
         for nom, bouton in boutons:
             texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
             dessiner_bouton(screen, bouton, texte, bouton.collidepoint(pygame.mouse.get_pos()))
@@ -232,125 +208,95 @@ def boucle_jeu(taille_grille, regles):
                             elif nom == "step":
                                 grille = appliquer_regles(grille, regles)
                             elif nom == "auto":
-                                #que si la grille est vide, remplir aléatoirement
-                                if np.sum(grille) == 0:
-                                    grille = remplir_grille_aleatoire(grille, taux_remplissage=0.2)
-                                else :
-                                    auto_mode = not auto_mode
-                            elif nom == "save":
-                                nom_fichier = save.demander_nom_fichier(screen)
-                                if nom_fichier:
-                                    save.save_game(nom_fichier + ".json", grille, regles)
-                            elif nom == "quit":  # Quitter et revenir au menu principal
-                                return "quit"
-
-                # Basculer l'état des cellules lors du clic dans la grille
+                                auto_mode = not auto_mode
+                            elif nom == "random":  # Ajouter une grille aléatoire
+                                grille = np.random.randint(2, size=(taille_grille, taille_grille))
                 x, y = event.pos
                 if x < 800 and y < 800:  # Clic dans la grille
                     x //= taille_cellule
                     y //= taille_cellule
-                    grille[x, y] = 1 - grille[x, y]  # Alterner l'état de la cellule entre 0 et 1
+                    grille[x, y] = 1 - grille[x, y]
 
-        # Mode automatique : appliquer les règles en continu
         if auto_mode:
             grille = appliquer_regles(grille, regles)
-            pygame.time.delay(300)  # Délai pour contrôler la vitesse du mode automatique
+            pygame.time.delay(300)
 
         clock.tick(60)
 
-# Fonction principale du jeu avec sauvegarde passée
-def boucle_jeu_load(grille, regles):
-    taille_grille = grille.shape[0]  # Taille de la grille déjà chargée
-    taille_cellule = 800 // taille_grille  # Calcul de la taille de chaque cellule
 
-    if grille is None:
-        print("Erreur lors du chargement de la grille.")
-        return "quit"
 
+def demander_taille(fenetre):
+    input_boxes = [
+        {'rect': pygame.Rect(300, 200, 200, 50), 'text': '', 'label': 'Taille de la map:'},
+    ]
+    bouton_valider = pygame.Rect(350, 500, 100, 50)
+    font = pygame.font.Font(None, 25)
+    active_box = None
+    error_message = ""
     running = True
-    auto_mode = False
-    clock = pygame.time.Clock()
 
     while running:
-        screen.fill(COULEUR_FOND)
-        dessiner_grille(screen, grille, taille_cellule)  # Dessiner la grille
+        fenetre.fill(COULEUR_FOND)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    for box in input_boxes:
+                        if box['rect'].collidepoint(event.pos):
+                            active_box = box
+                    if bouton_valider.collidepoint(event.pos):
+                        try:
+                            taille = int(input_boxes[0]['text'])
+                            if taille >= 50:
+                                return taille
+                            else:
+                                error_message = "La taille doit être >= 50."
+                        except ValueError:
+                            error_message = "Entrée invalide. Veuillez entrer un nombre entier."
+            elif event.type == pygame.KEYDOWN:
+                if active_box:
+                    if event.key == pygame.K_RETURN:
+                        active_box = None
+                    elif event.key == pygame.K_BACKSPACE:
+                        active_box['text'] = active_box['text'][:-1]
+                    else:
+                        active_box['text'] += event.unicode
 
-        #boutons
-        boutons = [
-            ("reset", pygame.Rect(850, 50, 140, 50)),
-            ("step", pygame.Rect(850, 120, 140, 50)),
-            ("auto", pygame.Rect(850, 190, 140, 50)),
-            ("save", pygame.Rect(850, 260, 140, 50)),
-            ("quit", pygame.Rect(850, 330, 140, 50))
-        ]
+        # Dessiner les boîtes d'entrée
+        for box in input_boxes:
+            pygame.draw.rect(fenetre, COULEUR_BOUTON, box['rect'], 2)
+            label_surface = font.render(box['label'], True, COULEUR_TEXTE)
+            fenetre.blit(label_surface, (box['rect'].x - 250, box['rect'].y + 10))
+            text_surface = font.render(box['text'], True, COULEUR_TEXTE)
+            fenetre.blit(text_surface, (box['rect'].x + 5, box['rect'].y + 10))
 
-        # Afficher les boutons
-        for nom, bouton in boutons:
-            texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
-            dessiner_bouton(screen, bouton, texte, bouton.collidepoint(pygame.mouse.get_pos()))
+        # Dessiner le bouton Valider
+        pygame.draw.rect(fenetre, COULEUR_BOUTON, bouton_valider)
+        valider_surface = font.render("Valider", True, COULEUR_TEXTE)
+        fenetre.blit(valider_surface, (bouton_valider.x + 10, bouton_valider.y + 10))
+
+        # Afficher le message d'erreur s'il existe
+        if error_message:
+            error_surface = font.render(error_message, True, (255, 0, 0))  # Texte rouge pour l'erreur
+            fenetre.blit(error_surface, (300, 300))  # Position du message d'erreur
 
         pygame.display.flip()
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Clic gauche
-                    for nom, bouton in boutons:
-                        if bouton.collidepoint(event.pos):
-                            if nom == "reset":
-                                grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Réinitialiser la grille
-                            elif nom == "step":
-                                grille = appliquer_regles(grille, regles)
-                            elif nom == "auto":
-                                #que si la grille est vide, remplir aléatoirement
-                                if np.sum(grille) == 0:
-                                    grille = remplir_grille_aleatoire(grille, taux_remplissage=0.2)
-                                else :
-                                    auto_mode = not auto_mode
-                            elif nom == "save":
-                                nom_fichier = save.demander_nom_fichier(screen)
-                                if nom_fichier:
-                                    save.save_game(nom_fichier + ".json", grille, regles)
-                            elif nom == "quit":
-                                return "quit"
 
-                # Basculer l'état de la cellule lors du clic sur la grille
-                x, y = event.pos
-                if x < 800 and y < 800:  # Clic à l'intérieur de la grille
-                    x //= taille_cellule
-                    y //= taille_cellule
-                    grille[x, y] = 1 - grille[x, y]  # Basculer l'état de la cellule entre 0 et 1
-
-        # Mode automatique : appliquer continuellement les règles
-        if auto_mode:
-            grille = appliquer_regles(grille, regles)
-            pygame.time.delay(300)  # Délai pour contrôler la vitesse du mode automatique
-
-        clock.tick(60)  # Limiter la fréquence d'images à 60 FPS
 
 
 # Programme principal
 if __name__ == "__main__":
-    TAILLE_GRILLE = demander_taille_grille()
-
     screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
     pygame.display.set_caption("Jeu de la Vie")
 
-    REGLES = demander_regles(screen)
 
     while True:
         action = afficher_accueil()
         if action == "new_game":
+            TAILLE_GRILLE = demander_taille(screen)
+
+            REGLES = demander_regles(screen)  # Pass the Pygame window to the function
             boucle_jeu(TAILLE_GRILLE, REGLES)
-        elif action == "load_game":
-            nom_fichier = save.demander_nom_fichier(screen)  # Demande à l'utilisateur de saisir un nom de fichier
-            if nom_fichier :
-                result = save.load_game(nom_fichier + ".json")
-                if result:
-                    grille, regles = result  # Récuperer la grille et les règles chargées
-                    boucle_jeu_load(grille, regles)  # Lancer le jeu avec les données chargées
-            else:
-                print("Nom de fichier non valide.")
-        elif action == "quit":
-            continue  # Retour à l'écran d'accueil
