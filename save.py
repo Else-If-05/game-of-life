@@ -3,17 +3,12 @@ import numpy as np
 import pygame
 
 def save_game(filename, grille, regles):
-    """
-    Save the game state to a file in JSON format.
-    :param filename: The name of the file.
-    :param grille: The grid state (numpy array).
-    :param regles: The rules of the game (dictionary).
-    """
+
     try:
         game_state = {
             "taille_grille": grille.shape[0],
             "regles": regles,
-            "grille": grille.tolist()  # Convert the numpy array to a list
+            "grille": grille.tolist()
         }
 
         with open(filename, 'w') as file:
@@ -24,11 +19,7 @@ def save_game(filename, grille, regles):
         print(f"Error while saving: {e}")
 
 def load_game(filename):
-    """
-    Load a game from a file.
-    :param filename: The name of the file.
-    :return: (grid, rules) or None if there's an error.
-    """
+
     try:
         with open(filename, 'r') as file:
             game_state = json.load(file)
@@ -45,11 +36,7 @@ def load_game(filename):
         return None
 
 def demander_nom_fichier(screen):
-    """
-    Affiche une boîte de dialogue textuelle pour demander un nom de fichier.
-    :param screen: Surface Pygame
-    :return: Nom du fichier saisi par l'utilisateur
-    """
+
     input_box = pygame.Rect(300, 350, 400, 50)
     font = pygame.font.Font(None, 36)
     actif = True
@@ -59,26 +46,27 @@ def demander_nom_fichier(screen):
     while running:
         screen.fill((240, 248, 255))  # Fond blanc cassé
 
-        # Afficher la boîte de texte
+        #affiche la boîte de texte
         pygame.draw.rect(screen, (200, 200, 200), input_box)
         pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
         text_surface = font.render(texte, True, (0, 0, 0))
         screen.blit(text_surface, (input_box.x + 5, input_box.y + 10))
 
-        # Afficher un texte explicatif
+        #affiche un texte explicatif
         message = font.render("Entrez le nom du fichier et appuyez sur Entrée", True, (0, 0, 0))
         screen.blit(message, (200, 250))
 
         pygame.display.flip()
 
+        #clavier
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return None
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Validation
+                if event.key == pygame.K_RETURN:
                     return texte
-                elif event.key == pygame.K_BACKSPACE:  # Effacer un caractère
+                elif event.key == pygame.K_BACKSPACE:
                     texte = texte[:-1]
                 else:
                     texte += event.unicode

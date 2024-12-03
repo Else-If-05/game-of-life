@@ -130,7 +130,6 @@ def afficher_accueil():
                             if bouton['text'] == "Nouvelle Partie":
                                 return "new_game"
                             if bouton['text'] == "Charger une Partie":
-
                                 return "load_game"
                             elif bouton['text'] == "Quitter":
                                 pygame.quit()
@@ -184,15 +183,12 @@ def compter_voisins(grille, x, y):
 
 
 def remplir_grille_aleatoire(grille, taux_remplissage=0.2):
-    """Remplir la grille de manière aléatoire avec des cellules vivantes"""
     for x in range(grille.shape[0]):
         for y in range(grille.shape[1]):
             grille[x, y] = 1 if random.random() < taux_remplissage else 0
     return grille
 
 
-
-# Fonction principale du jeu
 
 
 # Fonction principale du jeu
@@ -232,18 +228,19 @@ def boucle_jeu(taille_grille, regles):
                     for nom, bouton in boutons:
                         if bouton.collidepoint(event.pos):
                             if nom == "reset":
-                                grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Réinitialiser la grille
+                                grille = np.zeros((taille_grille, taille_grille), dtype=int)
                             elif nom == "step":
-                                grille = appliquer_regles(grille, regles)  # Appliquer les règles
+                                grille = appliquer_regles(grille, regles)
                             elif nom == "auto":
-                                # Si la grille est vide, remplir aléatoirement
-                                if np.sum(grille) == 0:  # Vérifier si toutes les cellules sont mortes
-                                    grille = remplir_grille_aleatoire(grille, taux_remplissage=0.2)  # Remplir aléatoirement
-                                auto_mode = not auto_mode  # Basculer le mode automatique
+                                #que si la grille est vide, remplir aléatoirement
+                                if np.sum(grille) == 0:
+                                    grille = remplir_grille_aleatoire(grille, taux_remplissage=0.2)
+                                else :
+                                    auto_mode = not auto_mode
                             elif nom == "save":
                                 nom_fichier = save.demander_nom_fichier(screen)
                                 if nom_fichier:
-                                    save.save_game(nom_fichier + ".json", grille, regles)  # Sauvegarder le jeu
+                                    save.save_game(nom_fichier + ".json", grille, regles)
                             elif nom == "quit":  # Quitter et revenir au menu principal
                                 return "quit"
 
@@ -259,9 +256,9 @@ def boucle_jeu(taille_grille, regles):
             grille = appliquer_regles(grille, regles)
             pygame.time.delay(300)  # Délai pour contrôler la vitesse du mode automatique
 
-        clock.tick(60)  # Limiter la fréquence à 60 FPS
+        clock.tick(60)
 
-# Fonction principale du jeu après chargement
+# Fonction principale du jeu avec sauvegarde passée
 def boucle_jeu_load(grille, regles):
     taille_grille = grille.shape[0]  # Taille de la grille déjà chargée
     taille_cellule = 800 // taille_grille  # Calcul de la taille de chaque cellule
@@ -278,14 +275,13 @@ def boucle_jeu_load(grille, regles):
         screen.fill(COULEUR_FOND)
         dessiner_grille(screen, grille, taille_cellule)  # Dessiner la grille
 
-        # Ajouter le bouton Quitter et autres boutons
-        bouton_quitter = pygame.Rect(850, 330, 140, 50)  # Position du bouton Quitter
+        #boutons
         boutons = [
             ("reset", pygame.Rect(850, 50, 140, 50)),
             ("step", pygame.Rect(850, 120, 140, 50)),
             ("auto", pygame.Rect(850, 190, 140, 50)),
             ("save", pygame.Rect(850, 260, 140, 50)),
-            ("quit", bouton_quitter)  # Ajouter le bouton Quitter
+            ("quit", pygame.Rect(850, 330, 140, 50))
         ]
 
         # Afficher les boutons
@@ -305,16 +301,19 @@ def boucle_jeu_load(grille, regles):
                             if nom == "reset":
                                 grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Réinitialiser la grille
                             elif nom == "step":
-                                grille = appliquer_regles(grille, regles)  # Appliquer les règles
+                                grille = appliquer_regles(grille, regles)
                             elif nom == "auto":
-                                auto_mode = not auto_mode  # Basculer le mode automatique
+                                #que si la grille est vide, remplir aléatoirement
+                                if np.sum(grille) == 0:
+                                    grille = remplir_grille_aleatoire(grille, taux_remplissage=0.2)
+                                else :
+                                    auto_mode = not auto_mode
                             elif nom == "save":
-                                # Demander à l'utilisateur un nom de fichier pour sauvegarder le jeu
                                 nom_fichier = save.demander_nom_fichier(screen)
                                 if nom_fichier:
-                                    save.save_game(nom_fichier + ".json", grille, regles)  # Sauvegarder le jeu
-                            elif nom == "quit":  # Quitter et revenir à l'écran d'accueil
-                                return "quit"  # Retour à l'écran d'accueil
+                                    save.save_game(nom_fichier + ".json", grille, regles)
+                            elif nom == "quit":
+                                return "quit"
 
                 # Basculer l'état de la cellule lors du clic sur la grille
                 x, y = event.pos
@@ -345,7 +344,6 @@ if __name__ == "__main__":
         if action == "new_game":
             boucle_jeu(TAILLE_GRILLE, REGLES)
         elif action == "load_game":
-
             nom_fichier = save.demander_nom_fichier(screen)  # Demande à l'utilisateur de saisir un nom de fichier
             if nom_fichier :
                 result = save.load_game(nom_fichier + ".json")
