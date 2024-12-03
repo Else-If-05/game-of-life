@@ -3,7 +3,6 @@ import numpy as np
 import pygame
 
 def save_game(filename, grille, regles):
-
     try:
         game_state = {
             "taille_grille": grille.shape[0],
@@ -19,7 +18,6 @@ def save_game(filename, grille, regles):
         print(f"Error while saving: {e}")
 
 def load_game(filename):
-
     try:
         with open(filename, 'r') as file:
             game_state = json.load(file)
@@ -36,7 +34,6 @@ def load_game(filename):
         return None
 
 def demander_nom_fichier(screen):
-
     input_box = pygame.Rect(300, 350, 400, 50)
     font = pygame.font.Font(None, 36)
     actif = True
@@ -46,19 +43,19 @@ def demander_nom_fichier(screen):
     while running:
         screen.fill((240, 248, 255))  # Fond blanc cassé
 
-        #affiche la boîte de texte
+        # Affiche la boîte de texte
         pygame.draw.rect(screen, (200, 200, 200), input_box)
         pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
         text_surface = font.render(texte, True, (0, 0, 0))
         screen.blit(text_surface, (input_box.x + 5, input_box.y + 10))
 
-        #affiche un texte explicatif
+        # Affiche un texte explicatif
         message = font.render("Entrez le nom du fichier et appuyez sur Entrée", True, (0, 0, 0))
         screen.blit(message, (200, 250))
 
         pygame.display.flip()
 
-        #clavier
+        # Clavier
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
