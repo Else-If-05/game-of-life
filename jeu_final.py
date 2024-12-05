@@ -171,6 +171,32 @@ def compter_voisins(grille, x, y):
     return total
 
 
+def afficher_popup(fenetre, temps):
+    """
+    Affiche une fenêtre pop-up en bas à droite de l'écran pendant 2 secondes pour montrer le temps d'exécution.
+    """
+    # Dimensions de la fenêtre pop-up
+    largeur, hauteur = 250, 50
+
+    # Positionnement de la pop-up en bas à droite
+    x = 750
+    y = 500
+
+    # Fond de la pop-up
+    pygame.draw.rect(fenetre, (0, 0, 0), (x, y, largeur, hauteur))
+    pygame.draw.rect(fenetre, (255, 255, 255), (x + 5, y + 5, largeur - 10, hauteur - 10))
+
+    # Texte de la pop-up
+    font_popup = pygame.font.Font(None, 26)
+    texte = font_popup.render(f"Temps: {temps:.6f} secondes", True, (0, 0, 0))
+    texte_rect = texte.get_rect(center=(x + largeur // 2, y + hauteur // 2))
+    fenetre.blit(texte, texte_rect)
+
+    pygame.display.flip()
+
+    # Délai pour fermer la pop-up après 2 secondes
+    pygame.time.delay(2000)
+
 
 def demander_taille(fenetre):
     input_boxes = [
@@ -271,6 +297,9 @@ def boucle_jeu(taille_grille, regles):
                                 grille = np.zeros((taille_grille, taille_grille), dtype=int)
                             elif nom == "step":
                                 grille = appliquer_regles(grille, regles)
+                                duree, grille = optimisation.mesurer_temps_execution(grille, regles)
+                                afficher_popup(screen, duree)
+                                print(f"Temps pour cette étape : {duree:.6f} secondes")
                             elif nom == "auto":
                                 auto_mode = not auto_mode
                             elif nom == "save":
@@ -339,6 +368,9 @@ def boucle_jeu_load(grille, regles):
                                 grille = np.zeros((taille_grille, taille_grille), dtype=int)  # Réinitialiser la grille
                             elif nom == "step":
                                 grille = appliquer_regles(grille, regles)
+                                duree, grille = optimisation.mesurer_temps_execution(grille, regles)
+                                afficher_popup(screen, duree)
+                                print(f"Temps pour cette étape : {duree:.6f} secondes")
                             elif nom == "auto":
                                auto_mode = not auto_mode
                             elif nom == "random":
@@ -365,9 +397,7 @@ def boucle_jeu_load(grille, regles):
         clock.tick(60)  # Limiter la fréquence d'images à 60 FPS
 
 def boucle_jeu_optimisé(taille_grille, regles):
-            """
-            Boucle de jeu optimisée pour les grandes grilles.
-            """
+
             grille = np.zeros((taille_grille, taille_grille), dtype=int)
             auto_mode = False
             clock = pygame.time.Clock()
