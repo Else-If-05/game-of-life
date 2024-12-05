@@ -2,7 +2,8 @@ import pygame
 import sys
 import numpy as np
 import save
-import random
+import optimisation
+
 
 # Initialiser Pygame
 pygame.init()
@@ -363,6 +364,69 @@ def boucle_jeu_load(grille, regles):
 
         clock.tick(60)  # Limiter la fréquence d'images à 60 FPS
 
+def boucle_jeu_optimisé(taille_grille, regles):
+            """
+            Boucle de jeu optimisée pour les grandes grilles.
+            """
+            grille = np.zeros((taille_grille, taille_grille), dtype=int)
+            auto_mode = False
+            clock = pygame.time.Clock()
+
+            taille_cellule = 800 // taille_grille
+
+            while True:
+                screen.fill(COULEUR_FOND)
+
+                # Dessiner la grille
+                dessiner_grille(screen, grille, taille_cellule)
+
+                boutons = []
+                bouton_reset = pygame.Rect(850, 50, 140, 50)
+                bouton_step = pygame.Rect(850, 100, 140, 50)
+                bouton_auto = pygame.Rect(850, 150, 140, 50)
+                bouton_random = pygame.Rect(850, 200, 140, 50)
+                bouton_quitter = pygame.Rect(850, 250, 140, 50)
+
+                boutons.extend(
+                    [("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random),
+                     ("quitter", bouton_quitter)])
+
+                for nom, bouton in boutons:
+                    texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
+                    dessiner_bouton(screen, bouton, texte, bouton.collidepoint(pygame.mouse.get_pos()))
+
+                pygame.display.flip()
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        return
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == 1:
+                            for nom, bouton in boutons:
+                                if bouton.collidepoint(event.pos):
+                                    if nom == "reset":
+                                        grille = np.zeros((taille_grille, taille_grille), dtype=int)
+                                    elif nom == "step":
+                                        grille = optimisation.appliquer_regles_optimise(grille, regles)
+                                    elif nom == "auto":
+                                        auto_mode = not auto_mode
+                                    elif nom == "random":
+                                        grille = np.random.randint(2, size=(taille_grille, taille_grille))
+                                    elif nom == "quitter":
+                                        return
+                        x, y = event.pos
+                        if x < 800 and y < 800:
+                            x //= taille_cellule
+                            y //= taille_cellule
+                            grille[x, y] = 1 - grille[x, y]
+
+                if auto_mode:
+                    grille = optimisation.appliquer_regles_optimise(grille, regles)
+                    pygame.time.delay(300)
+
+                clock.tick(60)
+
+
 # Programme principal
 if __name__ == "__main__":
     screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
@@ -372,8 +436,12 @@ if __name__ == "__main__":
         action = afficher_accueil()
         if action == "new_game":
             TAILLE_GRILLE = demander_taille(screen)
+
             REGLES = demander_regles(screen)
-            boucle_jeu(TAILLE_GRILLE, REGLES)
+            if TAILLE_GRILLE > 100:
+                boucle_jeu_optimisé(TAILLE_GRILLE, REGLES)
+            else:
+                boucle_jeu(TAILLE_GRILLE, REGLES)
         elif action == "load_game":
             nom_fichier = save.demander_nom_fichier(screen)
             if nom_fichier:
