@@ -2,6 +2,17 @@ import numpy as np
 import pygame
 import sys
 
+import time
+
+def mesurer_temps_execution(grille, regles):
+
+    debut = time.time()
+    nouvelle_grille = appliquer_regles_optimise(grille, regles)
+    fin = time.time()
+    duree = fin - debut
+    return duree, nouvelle_grille
+
+
 
 # Initialiser Pygame
 pygame.init()
