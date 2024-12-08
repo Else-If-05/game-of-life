@@ -71,6 +71,6 @@ def temps_de_calcul_par_taille(max_taille, steps, regles):
     plt.legend()
     plt.show()
 
-# ---- Programme Principal ---- #
-
+def compter_cellules(grille):
+    return np.sum(grille)
 
