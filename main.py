@@ -1,58 +1,35 @@
-import numpy as np
-import time
-import matplotlib.pyplot as plt
-import moteur
-import analyse_de_donnees as graphe
-import matplotlib
-matplotlib.use("TkAgg")  # Utilise Tkinter pour afficher les graphiques
+import fonctions_base
+import save
+import optimisation
+import pygame
+import jeu_final
 
-#DEBUT PARTIE DE PAUL
+# Programme principal
+if __name__ == "__main__":
+    screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
+    pygame.display.set_caption("Jeu de la Vie")
 
-# Demander à l'utilisateur la taille de la grille
-while True:
-    taille = int(input("Veuillez entrer la taille de la grille (N pour une grille NxN) : "))
-    if taille >= 10:
-        print("Grille initialisée.")
-        break
+    while True:
+        action = fonctions_base.afficher_accueil()
+        if action == "new_game":
+            TAILLE_GRILLE = fonctions_base.demander_taille(screen)
 
-# Initialisation de la grille
-grille = moteur.initialiser_grille(taille)
-
-# Demander les règles
-regles = moteur.demander_regles()
-
-# Nombre d'itérations
-iterations = 2
-cellules_vivantes = []
-fig1 = plt.figure(1)
-fig2 = plt.figure(2)
-
-# Affichage de l'évolution de la grille
-for i in range(1, iterations+1):  #j'ai changé iteration+1 au lieu de iteration
-    print(f"Étape {i}:")
-    plt.figure(1)
-    moteur.afficher_grille(grille)
-    plt.figure(2)
-    cellules_vivantes.append(graphe.compter_cellules(grille))
-    plt.clf()
-    plt.plot(np.arange(1, i+1, 1), cellules_vivantes)
-    plt.draw()
-    plt.pause(0.9)
-    grille = moteur.appliquer_regles(grille, regles)
-    time.sleep(0.5)  # Pause pour voir l'évolution
-
-#FIN PARTIE DE PAUL
-
-# Paramètres
-taille_grille = 50  # Taille de la grille (50x50)
-steps = 100  # Nombre d'étapes pour la simulation
-
-# Grille initiale aléatoire
-grille_initiale = np.random.randint(2, size=(taille_grille, taille_grille))
-
-print("Simulation de l'évolution des cellules...")
-graphe.evolution_cellules(grille_initiale, steps, regles)
-
-print("\nCalcul du temps de calcul en fonction de la taille de la grille...")
-graphe.temps_de_calcul_par_taille(100, steps, regles)
-
+            REGLES = fonctions_base.demander_regles(screen)
+            if TAILLE_GRILLE > 100:
+                optimisation.boucle_jeu_optimisé(TAILLE_GRILLE, REGLES)
+            else:
+                jeu_final.boucle_jeu(TAILLE_GRILLE, REGLES)
+        elif action == "load_game":
+            nom_fichier = save.demander_nom_fichier(screen)
+            if nom_fichier:
+                result = save.load_game(nom_fichier + ".json")
+                if result:
+                    grille, regles = result
+                    if TAILLE_GRILLE > 100:
+                        optimisation.boucle_jeu_load(grille, regles)
+                    else :
+                        jeu_final.boucle_jeu_load(grille, regles)
+            else:
+                print("Nom de fichier non valide.")
+        elif action == "quit":
+            continue
