@@ -3,6 +3,8 @@ import time
 import matplotlib.pyplot as plt
 import moteur
 import analyse_de_donnees as graphe
+import matplotlib
+matplotlib.use("TkAgg")  # Utilise Tkinter pour afficher les graphiques
 
 #DEBUT PARTIE DE PAUL
 
@@ -21,11 +23,21 @@ regles = moteur.demander_regles()
 
 # Nombre d'itérations
 iterations = 2
+cellules_vivantes = []
+fig1 = plt.figure(1)
+fig2 = plt.figure(2)
 
 # Affichage de l'évolution de la grille
-for i in range(iterations):
-    print(f"Étape {i + 1}:")
+for i in range(1, iterations+1):  #j'ai changé iteration+1 au lieu de iteration
+    print(f"Étape {i}:")
+    plt.figure(1)
     moteur.afficher_grille(grille)
+    plt.figure(2)
+    cellules_vivantes.append(graphe.compter_cellules(grille))
+    plt.clf()
+    plt.plot(np.arange(1, i+1, 1), cellules_vivantes)
+    plt.draw()
+    plt.pause(0.9)
     grille = moteur.appliquer_regles(grille, regles)
     time.sleep(0.5)  # Pause pour voir l'évolution
 
