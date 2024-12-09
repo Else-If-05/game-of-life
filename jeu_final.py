@@ -505,4 +505,3 @@ if __name__ == "__main__":
         elif action == "quit":
             pygame.quit()
             sys.exit()
-

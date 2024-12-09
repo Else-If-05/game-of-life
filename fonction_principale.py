@@ -1,102 +1,17 @@
 import pygame
+import optimisation
 import numpy as np
 import save
+import fonctions_base
+import cellules_et_temps
+
 import matplotlib
 matplotlib.use("TkAgg")  # Utiliser un backend compatible
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import threading
-import time
-import fonctions_base
-import optimisation
 
-# Modèles pour les "Still lifes"
-STILL_LIFES = {
-    "Block": np.array([[1, 1],
-                       [1, 1]]),
-    "Beehive": np.array([[0, 1, 1, 0],
-                         [1, 0, 0, 1],
-                         [0, 1, 1, 0]]),
-    "Loaf": np.array([[0, 1, 1, 0],
-                      [1, 0, 0, 1],
-                      [0, 1, 0, 1],
-                      [0, 0, 1, 0]]),
-    "Boat": np.array([[1, 1, 0],
-                      [1, 0, 1],
-                      [0, 1, 0]]),
-    "Tub": np.array([[0, 1, 0],
-                     [1, 0, 1],
-                     [0, 1, 0]])
-}
-
-# Fonction pour compter les cellules vivantes dans la grille
-def compter_cellules_vivantes(grille):
-    return np.sum(grille)
-
-# Fonction pour gérer le graphe évolutif dans un thread séparé
-def afficher_graphe_evolutif(data):
-    fig, ax = plt.subplots()
-    ax.set_title("Évolution du nombre de cellules vivantes")
-    ax.set_xlabel("Temps (itérations)")
-    ax.set_ylabel("Cellules vivantes")
-    line, = ax.plot([], [], label="Cellules vivantes")
-    ax.legend()
-    x_data, y_data = [], []
-
-    def update(frame):
-        if len(data) > 0:
-            x_data.append(len(x_data))  # Ajoute le numéro de l'itération
-            y_data.append(data[-1])    # Ajoute le dernier nombre de cellules vivantes
-            line.set_data(x_data, y_data)
-            ax.relim()
-            ax.autoscale_view()
-
-    ani = FuncAnimation(fig, update, interval=500, cache_frame_data=False)
-    plt.show()
-
-
-# Fonction pour détecter une structure dans une sous-grille
-def detect_structure(subgrid, structure):
-    return np.array_equal(subgrid, structure)
-
-# Fonction pour analyser la grille et compter les "Still lifes"
-def analyser_still_lifes(grille):
-    counts = {key: 0 for key in STILL_LIFES}
-    taille_grille = grille.shape
-
-    for name, pattern in STILL_LIFES.items():
-        pattern_size = pattern.shape
-        for x in range(taille_grille[0] - pattern_size[0] + 1):
-            for y in range(taille_grille[1] - pattern_size[1] + 1):
-                subgrid = grille[x:x + pattern_size[0], y:y + pattern_size[1]]
-                if detect_structure(subgrid, pattern):
-                    counts[name] += 1
-
-    return counts
-
-# Fonction pour afficher un histogramme
-def afficher_histogramme_still_lifes(counts):
-    names = list(counts.keys())
-    values = list(counts.values())
-
-    plt.figure(figsize=(8, 6))
-    plt.bar(names, values, color="skyblue")
-    plt.xlabel("Structures")
-    plt.ylabel("Occurrences")
-    plt.title("Occurrences des Still Lifes dans la grille")
-    plt.show()
-
-def afficher_graphe_temps_calcul(tailles, temps):
-    """
-    Affiche un graphe des temps de calcul en fonction de la taille de la grille.
-    """
-    fig, ax = plt.subplots()
-    ax.plot(tailles, temps, marker='o', label="Temps de calcul")
-    ax.set_title("Temps de calcul en fonction de la taille de la grille")
-    ax.set_xlabel("Taille de la grille")
-    ax.set_ylabel("Temps de calcul (secondes)")
-    ax.legend()
-    plt.show()
+screen = pygame.display.set_mode((1000, 800))
 
 
 # Fonction principale du jeu
@@ -109,7 +24,7 @@ def boucle_jeu(taille_grille, regles):
 
     # Liste pour stocker le nombre de cellules vivantes
     cellules_vivantes = []
-    threading.Thread(target=afficher_graphe_evolutif, args=(cellules_vivantes,), daemon=True).start()
+    threading.Thread(target=cellules_et_temps.afficher_graphe_evolutif, args=(cellules_vivantes,), daemon=True).start()
 
     while running:
         screen.fill(fonctions_base.COULEUR_FOND)
@@ -147,7 +62,7 @@ def boucle_jeu(taille_grille, regles):
                                 duree, grille = optimisation.mesurer_temps_execution(grille, regles)
                                 fonctions_base.afficher_popup(screen, duree)
                                 print(f"Temps pour cette étape : {duree:.6f} secondes")
-                                cellules_vivantes.append(compter_cellules_vivantes(grille))
+                                cellules_et_temps.cellules_vivantes.append(cellules_et_temps.compter_cellules_vivantes(grille))
 
                             elif nom == "auto":
                                 auto_mode = not auto_mode
@@ -157,7 +72,7 @@ def boucle_jeu(taille_grille, regles):
                                     save.save_game(nom_fichier + ".json", grille, regles)
                             elif nom == "random":
                                 grille = np.random.randint(2, size=(taille_grille, taille_grille))
-                                cellules_vivantes.append(compter_cellules_vivantes(grille))
+                                cellules_vivantes.append(cellules_et_temps.compter_cellules_vivantes(grille))
 
                             elif nom == "quitter":
                                 return fonctions_base.afficher_accueil()
@@ -169,7 +84,7 @@ def boucle_jeu(taille_grille, regles):
 
         if auto_mode:
             grille = fonctions_base.appliquer_regles(grille, regles)
-            cellules_vivantes.append(compter_cellules_vivantes(grille))
+            cellules_vivantes.append(cellules_et_temps.compter_cellules_vivantes(grille))
             pygame.time.delay(300)
 
         clock.tick(60)
@@ -247,51 +162,3 @@ def boucle_jeu_load(grille, regles):
         clock.tick(60)
 
 
-
-
-# Programme principal
-if __name__ == "__main__":
-    screen = pygame.display.set_mode((1000, 800))  # Fenêtre plus large pour le panneau
-    pygame.display.set_caption("Jeu de la Vie")
-
-    while True:
-        action = fonctions_base.afficher_accueil()
-        if action == "new_game":
-            TAILLE_GRILLE = fonctions_base.demander_taille(screen)
-
-            REGLES = fonctions_base.demander_regles(screen)
-            if TAILLE_GRILLE > 100:
-                optimisation.boucle_jeu_optimisé(TAILLE_GRILLE, REGLES)
-            else:
-                boucle_jeu(TAILLE_GRILLE, REGLES)
-
-             # Calculer les temps de calcul pour différentes tailles de grilles
-            tailles = np.arange(50, 201, 10)  # Tailles de grilles de 50 à 200
-            temps = []
-            for taille in tailles:
-                grille_test = np.random.randint(2, size=(taille, taille))
-                start = time.time()
-                fonctions_base.appliquer_regles(grille_test, REGLES)
-                end = time.time()
-                temps.append(end - start)
-
-            # Afficher le graphe des temps de calcul
-            afficher_graphe_temps_calcul(tailles, temps)
-
-            # Lancer la boucle du jeu
-            boucle_jeu(TAILLE_GRILLE, REGLES)
-
-        elif action == "load_game":
-            nom_fichier = save.demander_nom_fichier(screen)
-            if nom_fichier:
-                result = save.load_game(nom_fichier + ".json")
-                if result:
-                    grille, regles = result
-                    if TAILLE_GRILLE > 100:
-                        optimisation.boucle_jeu_optimisé(grille, regles)
-                    else :
-                        boucle_jeu_load(grille, regles)
-            else:
-                print("Nom de fichier non valide.")
-        elif action == "quit":
-            continue
