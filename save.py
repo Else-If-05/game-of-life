@@ -7,7 +7,7 @@ def save_game(filename, grille, regles):
         game_state = {
             "taille_grille": grille.shape[0],
             "regles": regles,
-            "grille": grille.tolist()
+            "grille": grille.tolist(),
         }
 
         with open(filename, 'w') as file:

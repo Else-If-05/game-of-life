@@ -193,7 +193,7 @@ def boucle_jeu_optimisé(taille_grille, regles):
         clock.tick(60)
 
 # Fonction principale du jeu avec sauvegarde chargée
-def boucle_jeu__optimisé_load(grille, regles):
+def boucle_jeu_optimisé_load(grille, regles):
     taille_grille = grille.shape[0]  # Taille de la grille déjà chargée
     taille_cellule = 800 // taille_grille  # Calcul de la taille de chaque cellule
 
