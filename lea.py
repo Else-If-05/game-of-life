@@ -42,6 +42,11 @@ class Constant:
         elif self.value == 4:
             return self.get_tub()
 
+    def update_period(self, new_period, max_x, max_y):
+        """Mise à jour de la période et cycle de vie."""
+        self.Ship_period = new_period
+        self.phase = (self.phase + 1) % self.get_max_phases()  # Passe à la phase suivante
+
     @staticmethod
     def get_block():
         return [[1, 1],
@@ -76,96 +81,154 @@ class Constant:
 class Oscillator:
     Oscillator_color = (200, 0, 0)  # Red
 
-    def __init__(self, case_x, case_y):
+    def __init__(self, case_x, case_y, oscillator_type=0):
         self.case_x = case_x
         self.case_y = case_y
         self.color = Oscillator.Oscillator_color
-        self.value = 0
-        self.Oscillator_period = 0
-
-    def update_period(self, new_period, max_x, max_y):
-        self.Oscillator_period = new_period
-        matrix = self.get_matrix()
-        matrix_height = len(matrix)
-        matrix_width = len(matrix[0])
-
-        self.case_x = max(0, min(self.case_x, max_x - matrix_width))
-        self.case_y = max(0, min(self.case_y, max_y - matrix_height))
+        self.type = oscillator_type  # Type d'oscillateur (0 = blinker, 1 = toad, etc.)
+        self.phase = 0  # État courant de l'oscillateur
+        self.Oscillator_period = 0  # Période actuelle pour un contrôle précis
 
     def get_position(self):
         return self.case_x, self.case_y
 
     def get_matrix(self):
-        if self.Oscillator_period == 0:
-            return self.get_blinker()
-        elif self.Oscillator_period == 1:
-            return self.get_toad()
-        elif self.Oscillator_period == 2:
-            return self.get_beacon()
-        elif self.Oscillator_period == 3:
-            return self.get_pulsar()
-        elif self.Oscillator_period == 4:
-            return self.get_penta_decathlon()
+        """Récupère la matrice correspondant à la phase actuelle."""
+        if self.type == 0:
+            return self.get_blinker(self.phase)
+        elif self.type == 1:
+            return self.get_toad(self.phase)
+        elif self.type == 2:
+            return self.get_beacon(self.phase)
+        elif self.type == 3:
+            return self.get_pulsar(self.phase)
+
+    def update_period(self, new_period, max_x, max_y):
+        """Mise à jour de la période et cycle de vie."""
+        self.Oscillator_period = new_period
+        self.phase = (self.phase + 1) % self.get_max_phases()  # Passe à la phase suivante
+
+    def get_max_phases(self):
+        """Retourne le nombre de phases pour un oscillateur donné."""
+        if self.type == 0:  # Blinker
+            return 2
+        elif self.type == 1:  # Toad
+            return 2
+        elif self.type == 2:  # Beacon
+            return 2
+        elif self.type == 3:  # Pulsar
+            return 3
+        return 1
 
     @staticmethod
-    def get_blinker():
-        return [[1],
-                [1],
-                [1]]
+    def get_blinker(phase):
+        """Phases du Blinker (période 2)."""
+        phases = [
+            [[1, 1, 1]],
+            [[1], [1], [1]]
+        ]
+        return phases[phase % len(phases)]
 
     @staticmethod
-    def get_toad():
-        return [[0, 0, 1, 0],
-                [1, 0, 0, 1],
-                [1, 0, 0, 1],
-                [0, 1, 0, 0]]
+    def get_toad(phase):
+        """Phases du Toad (période 2)."""
+        phases = [
+            [[0, 1, 1, 1], [1, 1, 1, 0]],
+            [[0, 1, 0, 0], [1, 0, 0, 1], [1, 0, 0, 1], [0, 0, 1, 0]]
+        ]
+        return phases[phase % len(phases)]
 
     @staticmethod
-    def get_beacon():
-        return [[1, 1, 0, 0],
-                [1, 1, 0, 0],
-                [0, 0, 1, 1],
-                [0, 0, 1, 1]]
+    def get_beacon(phase):
+        """Phases du Beacon (période 2)."""
+        phases = [
+            [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]],
+            [[1, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 1]]
+        ]
+        return phases[phase % len(phases)]
 
     @staticmethod
-    def get_pulsar():
-        return [[0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
-                [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
-                [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0]]
-
-    @staticmethod
-    def get_penta_decathlon():
-        return [[0, 1, 1, 1, 0],
-                [1, 0, 0, 0, 1],
-                [1, 0, 0, 0, 1],
-                [1, 0, 0, 0, 1],
-                [1, 0, 0, 0, 1],
-                [0, 1, 1, 1, 0]]
+    def get_pulsar(phase):
+        """Phases du Pulsar (période 3)."""
+        phases = [
+            [[0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1], [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
+             [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0]],
+            [[0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+             [0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+             [0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+             [0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0]]
+        ]
+        return phases[phase % len(phases)]
 
 
 class Ship:
     Ship_color = (0, 200, 0)  # Green
 
-    def __init__(self, case_x, case_y):
+    def __init__(self, case_x, case_y, grid):
         self.case_x = case_x
         self.case_y = case_y
-        self.color = Ship.Ship_color
-        self.value = 0
-        self.phase = 0
+        self.grid = grid  # Référence à la grille principale
+        self.value = 0  # Identifie le type de ship (0 = glider, etc.)
+        self.phase = 0  # État courant du vaisseau
+        self.color = Ship.Ship_color  # Add color attribute
+        self.Ship_period = 0  # Période actuelle pour un contrôle précis
 
-    def move(self, max_x, max_y):
-        self.case_y = (self.case_y + 1) % max_y  # Wrap around vertically
+    def update_period(self, new_period, max_x, max_y):
+        """Mise à jour de la période et cycle de vie."""
+        self.Ship_period = new_period
+        self.phase = (self.phase + 1) % 8  # Passe à la phase suivante
+
+    def move(self, max_x, max_y, reset_threshold=3):
+        """
+        Déplace le vaisseau sur la grille. Si le vaisseau s'approche des bords
+        à une distance égale ou inférieure à reset_threshold, il est réinitialisé
+        à la position opposée sur la grille.
+
+        :param max_x: Taille maximale en X de la grille.
+        :param max_y: Taille maximale en Y de la grille.
+        :param reset_threshold: Distance au bord avant réinitialisation.
+        """
+        # Effacer la position actuelle du ship de la grille
+        matrix = self.get_matrix()
+        for i, row in enumerate(matrix):
+            for j, cell in enumerate(row):
+                if cell == 1:
+                    if 0 <= self.case_x + i < max_x and 0 <= self.case_y + j < max_y:
+                        self.grid[self.case_x + i][self.case_y + j] = 0
+
+        # Vérifier si le vaisseau s'approche des limites et réinitialiser à l'opposé
+        if max_x - self.case_x-3 <= reset_threshold:  # Proche du bord droit
+            self.case_x = reset_threshold  # Reposition à gauche
+        elif self.case_x < reset_threshold:  # Proche du bord gauche
+            self.case_x = max_x - reset_threshold  # Reposition à droite
+
+        if max_y - self.case_y-3 <= reset_threshold:  # Proche du bord bas
+            self.case_y = reset_threshold  # Reposition en haut
+        elif self.case_y < reset_threshold:  # Proche du bord haut
+            self.case_y = max_y - reset_threshold  # Reposition en bas
+        else:
+            # Mise à jour classique du mouvement
+            self.case_x = (self.case_x + 1) % max_x  # Mouvement horizontal
+            self.case_y = (self.case_y + 1) % max_y  # Mouvement vertical
+
+        # Dessiner la nouvelle position du ship sur la grille
+        matrix = self.get_matrix()
+        for i, row in enumerate(matrix):
+            for j, cell in enumerate(row):
+                if cell == 1:
+                    if 0 <= self.case_x + i < max_x and 0 <= self.case_y + j < max_y:
+                        self.grid[self.case_x + i][self.case_y + j] = 1
 
     def get_position(self):
         return self.case_x, self.case_y
 
     def get_matrix(self):
+        """Récupère la matrice correspondant à la phase actuelle."""
         self.phase += 1
-        if self.phase >= 8: self.phase = 0
-        print(self.phase)
+        if self.phase >= 8:  # 8 est le nombre maximum de phases (modifiable)
+            self.phase = 0
 
         if self.value == 0:
             return self.get_glider(self.phase)
@@ -178,55 +241,48 @@ class Ship:
 
     @staticmethod
     def get_glider(phase):
-        return [[0, 0, 1],
-                [1, 0, 1],
-                [0, 1, 1]]
+        """Phases du Glider."""
+        phases = [
+            [[0, 0, 1], [1, 0, 1], [0, 1, 1]],
+            [[1, 0, 0], [0, 1, 1], [1, 1, 0]],
+            [[0, 1, 0], [0, 0, 1], [1, 1, 1]],
+            [[0, 0, 1], [1, 0, 1], [0, 1, 1]]
+        ]
+        return phases[phase % len(phases)]
 
     @staticmethod
     def get_light_weight_ship(phase):
-        return [[0, 1, 1, 1, 1],
-                [1, 0, 0, 0, 1],
-                [0, 0, 0, 0, 1],
-                [1, 0, 0, 1, 0]]
+        """Phases du Lightweight Ship."""
+        phases = [
+            [[0, 1, 1, 1, 1], [1, 0, 0, 0, 1], [0, 0, 0, 0, 1], [1, 0, 0, 1, 0]],
+            [[1, 0, 1, 1, 1], [0, 1, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 0, 0]],
+            [[0, 0, 1, 1, 0], [1, 0, 0, 0, 1], [0, 1, 1, 0, 1], [1, 1, 0, 1, 0]],
+            [[1, 1, 0, 1, 1], [0, 1, 1, 0, 0], [1, 0, 1, 1, 1], [0, 0, 0, 0, 1]]
+        ]
+        return phases[phase % len(phases)]
 
     @staticmethod
     def get_middle_weight_ship(phase):
-        if phase < 2:
-            return [[0, 0, 1, 0, 0, 0],
-                    [1, 0, 0, 0, 1, 0],
-                    [0, 0, 0, 0, 0, 1],
-                    [1, 0, 0, 0, 0, 1],
-                    [0, 1, 1, 1, 1, 1]]
-        if phase < 4:
-            return [[0, 0, 0, 0, 0, 0],
-                    [0, 0, 1, 1, 1, 0],
-                    [0, 1, 1, 1, 1, 1],
-                    [1, 1, 0, 1, 1, 1],
-                    [1, 1, 1, 0, 0, 0]]
-        if phase < 6:
-            return [[0, 1, 1, 1, 1, 1],
-                    [1, 0, 0, 0, 0, 1],
-                    [0, 0, 0, 0, 0, 1],
-                    [1, 0, 0, 0, 1, 0],
-                    [0, 0, 1, 0, 0, 0]]
-        else:
-            return [[0, 0, 0, 0, 0, 0],
-                    [1, 1, 1, 0, 0, 0],
-                    [1, 1, 0, 1, 1, 1],
-                    [0, 1, 1, 1, 1, 1],
-                    [0, 0, 1, 1, 1, 0]]
-
+        """Phases du Middleweight Ship."""
+        phases = [
+            [[0, 1, 1, 1, 1, 0], [1, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 1], [0, 1, 1, 1, 1, 1]],
+            [[1, 0, 1, 1, 1, 0], [0, 1, 0, 0, 0, 1], [1, 0, 0, 0, 0, 1], [0, 1, 1, 0, 1, 0], [1, 0, 1, 1, 1, 1]],
+            [[0, 1, 0, 1, 1, 1], [1, 0, 1, 0, 0, 1], [0, 1, 1, 0, 0, 0], [1, 1, 0, 1, 0, 1], [0, 1, 1, 1, 0, 0]],
+            [[1, 1, 1, 0, 1, 1], [0, 1, 0, 1, 0, 0], [1, 0, 1, 0, 1, 1], [0, 1, 1, 1, 0, 1], [1, 1, 0, 1, 1, 0]]
+        ]
+        return phases[phase % len(phases)]
 
     @staticmethod
     def get_heavy_weight_ship(phase):
-        return [[0, 0, 1, 1, 0, 0, 0],
-                [1, 0, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 1],
-                [0, 1, 1, 1, 1, 1, 1]]
-
-
-def spawn_random_structure(max, x, y, key):
+        """Phases du Heavyweight Ship."""
+        phases = [
+            [[0, 1, 1, 1, 1, 1, 0], [1, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 1], [0, 1, 1, 1, 1, 1, 1]],
+            [[1, 0, 1, 1, 1, 1, 0], [0, 1, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 1], [0, 1, 1, 0, 0, 1, 0], [1, 0, 1, 1, 1, 1, 1]],
+            [[0, 1, 0, 1, 1, 1, 0], [1, 0, 1, 0, 0, 0, 1], [0, 1, 0, 0, 0, 1, 1], [1, 0, 1, 1, 0, 0, 0], [0, 1, 1, 1, 1, 0, 0]],
+            [[1, 1, 1, 0, 1, 1, 1], [0, 1, 0, 1, 0, 0, 0], [1, 0, 1, 0, 1, 1, 1], [0, 1, 0, 1, 1, 1, 0], [1, 1, 1, 0, 1, 0, 1]]
+        ]
+        return phases[phase % len(phases)]
+def spawn_random_structure(max, x, y, key, grid):
     if key == pygame.K_a:
         stru = Constant(x, y)
         stru.value = 0  # Block
@@ -248,39 +304,36 @@ def spawn_random_structure(max, x, y, key):
         stru.value = 4  # Tub
         return stru
     elif key == pygame.K_f:
-        stru = Oscillator(x, y)
-        stru.Oscillator_period = 0  # Blinker
+        stru = Oscillator(x, y, oscillator_type=0)  # Blinker
+        stru.grid = grid  # Lier la grille à l'oscillateur
         return stru
     elif key == pygame.K_g:
-        stru = Oscillator(x, y)
-        stru.Oscillator_period = 1  # Toad
+        stru = Oscillator(x, y, oscillator_type=1)  # Toad
+        stru.grid = grid  # Lier la grille à l'oscillateur
         return stru
     elif key == pygame.K_h:
-        stru = Oscillator(x, y)
-        stru.Oscillator_period = 2  # Beacon
+        stru = Oscillator(x, y, oscillator_type=2)  # Beacon
+        stru.grid = grid  # Lier la grille à l'oscillateur
         return stru
     elif key == pygame.K_i:
-        stru = Oscillator(x, y)
-        stru.Oscillator_period = 3  # Pulsar
+        stru = Oscillator(x, y, oscillator_type=3)  # Pulsar
+        stru.grid = grid  # Lier la grille à l'oscillateur
         return stru
+
     elif key == pygame.K_j:
-        stru = Oscillator(x, y)
-        stru.Oscillator_period = 4  # Penta-decathlon
-        return stru
-    elif key == pygame.K_k:
-        stru = Ship(x, y)
+        stru = Ship(x, y, grid)  # Lier la grille au vaisseau
         stru.value = 0  # Glider
         return stru
-    elif key == pygame.K_l:
-        stru = Ship(x, y)
+    elif key == pygame.K_k:
+        stru = Ship(x, y, grid)  # Lier la grille au vaisseau
         stru.value = 1  # Light weight ship
         return stru
-    elif key == pygame.K_m:
-        stru = Ship(x, y)
+    elif key == pygame.K_l:
+        stru = Ship(x, y, grid)  # Lier la grille au vaisseau
         stru.value = 2  # Middle weight ship
         return stru
-    elif key == pygame.K_n:
-        stru = Ship(x, y)
+    elif key == pygame.K_m:
+        stru = Ship(x, y, grid)  # Lier la grille au vaisseau
         stru.value = 3  # Heavy weight ship
         return stru
 
@@ -290,13 +343,12 @@ def spawn_random_structure(max, x, y, key):
 def update_structures(structures, max_x, max_y):
     for structure in structures:
         if isinstance(structure, Oscillator):
-            new_period = (structure.Oscillator_period + 1) % 5
-            structure.update_period(new_period, max_x, max_y)
+            structure.update_period(structure.Oscillator_period, max_x, max_y)
         elif isinstance(structure, Ship):
+            structure.update_period(structure.Ship_period, max_x, max_y)
             structure.move(max_x, max_y)
 
 
-#avec structure
 def dessiner_grille(fenetre, grille, taille_cellule, scale_factor, taille_grille, deplacement_x, deplacement_y,
                     structures):
     offset_x = ((800 - taille_grille * taille_cellule * scale_factor) / 2) + deplacement_x
@@ -432,7 +484,7 @@ def boucle_jeu(taille_grille, regles):
                     grid_y = int((mouse_y - offset_y) / (taille_cellule * scale_factor))
 
                     if 0 <= grid_x < taille_grille and 0 <= grid_y < taille_grille:
-                        structure = spawn_random_structure(taille_grille, grid_x, grid_y, event.key)
+                        structure = spawn_random_structure(taille_grille, grid_x, grid_y, event.key, grille)
                         if structure:
                             structures.append(structure)
 
