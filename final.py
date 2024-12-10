@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import threading
 import time
-import random
+import fonctions_base
 
 # Initialiser Pygame
 pygame.init()
@@ -429,6 +429,7 @@ def boucle_jeu(taille_grille, regles, cellules_vivantes=None, still_lifes_data=N
                                 nom_fichier = save.demander_nom_fichier(screen)
                                 if nom_fichier:
                                     save.save_game(nom_fichier + ".json", grille, regles)
+
                             elif nom == "quit":
                                 return afficher_accueil()
 
@@ -441,7 +442,7 @@ def boucle_jeu(taille_grille, regles, cellules_vivantes=None, still_lifes_data=N
         if auto_mode:
             grille = appliquer_regles(grille, regles)
             cellules_vivantes.append(compter_cellules_vivantes(grille))
-            #still_lifes_data.append(analyser_still_lifes(grille))
+            still_lifes_data.append(analyser_still_lifes(grille))
             pygame.time.delay(300)
 
         clock.tick(60)
@@ -449,21 +450,23 @@ def boucle_jeu(taille_grille, regles, cellules_vivantes=None, still_lifes_data=N
 
 
 # Fonction principale du jeu avec sauvegarde chargée
-def boucle_jeu_load(grille, regles, cellules_vivantes):
+def boucle_jeu_load(grille, regles, cellules_vivantes, still_lifes_data):
     taille_grille = grille.shape[0]
     taille_cellule = 800 // taille_grille
     running = True
     auto_mode = False
     clock = pygame.time.Clock()
 
-    # Lancer le graphe évolutif dans un thread
-    threading.Thread(target=afficher_graphe_evolutif, args=(cellules_vivantes,), daemon=True).start()
+    # Lancer le thread pour les graphiques évolutifs
+    threading.Thread(
+        target=afficher_graphes_evolutifs, args=(cellules_vivantes, still_lifes_data), daemon=True
+    ).start()
 
     while running:
         screen.fill(COULEUR_FOND)
         dessiner_grille(screen, grille, taille_cellule)
 
-        # Boutons de contrôle
+        # Afficher les boutons de contrôle
         boutons = [
             ("reset", pygame.Rect(850, 50, 140, 50)),
             ("step", pygame.Rect(850, 100, 140, 50)),
@@ -489,23 +492,22 @@ def boucle_jeu_load(grille, regles, cellules_vivantes):
                             if nom == "reset":
                                 grille.fill(0)
                                 cellules_vivantes.clear()
+                                still_lifes_data.clear()
                             elif nom == "step":
                                 grille = appliquer_regles(grille, regles)
                                 cellules_vivantes.append(compter_cellules_vivantes(grille))
+                                still_lifes_data.append(analyser_still_lifes(grille))
                             elif nom == "auto":
                                 auto_mode = not auto_mode
                             elif nom == "random":
                                 grille = np.random.randint(2, size=(taille_grille, taille_grille))
                                 cellules_vivantes.append(compter_cellules_vivantes(grille))
+                                still_lifes_data.append(analyser_still_lifes(grille))
                             elif nom == "save":
                                 nom_fichier = save.demander_nom_fichier(screen)
                                 if nom_fichier:
-                                    save.save_game(
-                                        nom_fichier + ".json",
-                                        grille,
-                                        regles,
-                                        cellules_vivantes=cellules_vivantes
-                                    )
+                                    save.save_game(nom_fichier + ".json", grille, regles)
+
                             elif nom == "quit":
                                 return afficher_accueil()
 
@@ -519,9 +521,11 @@ def boucle_jeu_load(grille, regles, cellules_vivantes):
         if auto_mode:
             grille = appliquer_regles(grille, regles)
             cellules_vivantes.append(compter_cellules_vivantes(grille))
+            still_lifes_data.append(analyser_still_lifes(grille))
             pygame.time.delay(300)
 
         clock.tick(60)
+
 
 # Programme principal
 if __name__ == "__main__":
@@ -552,19 +556,17 @@ if __name__ == "__main__":
             still_lifes_data = []  # Liste pour l'évolution des structures still lifes
             boucle_jeu(TAILLE_GRILLE, REGLES, cellules_vivantes, still_lifes_data)
 
-
         elif action == "load_game":
             nom_fichier = save.demander_nom_fichier(screen)
             if nom_fichier:
+                cellules_vivantes = []  # Liste pour l'évolution des cellules vivantes
+                still_lifes_data = []
                 result = save.load_game(nom_fichier + ".json")
                 if result:
                     grille, regles = result
-                    boucle_jeu_load(grille, regles)  # Lancer le jeu avec les données chargées
+                    boucle_jeu_load(grille, regles, cellules_vivantes,still_lifes_data)  # Lancer le jeu avec les données chargées
             else:
                 print("Nom de fichier non valide.")
 
         elif action == "quit":
             continue
-
-
-
