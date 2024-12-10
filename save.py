@@ -2,7 +2,7 @@ import json
 import numpy as np
 import pygame
 
-def save_game(filename, grille, regles):
+def save_jeu(fichier, grille, regles):
     try:
         game_state = {
             "taille_grille": grille.shape[0],
@@ -10,27 +10,28 @@ def save_game(filename, grille, regles):
             "grille": grille.tolist(),
         }
 
-        with open(filename, 'w') as file:
+        with open(fichier, 'w') as file:
             json.dump(game_state, file)
 
-        print(f"Game saved to file {filename}")
+        print(f"Jeu sauvegarde : {fichier}")
     except Exception as e:
-        print(f"Error while saving: {e}")
+        print(f"Erreur : {e}")
 
-def load_game(filename):
+def load_jeu(fichier):
     try:
-        with open(filename, 'r') as file:
+        with open(fichier, 'r') as file:
             game_state = json.load(file)
-            print("Game state loaded:", game_state)  # Debugging line
+            print("Jeu load :", game_state)
 
         taille_grille = game_state["taille_grille"]
         regles = game_state["regles"]
         grille = np.array(game_state["grille"], dtype=int)
 
-        print(f"Game loaded from file {filename}")
+        print(f" Jeu load de :  {fichier}")
         return grille, regles
+
     except Exception as e:
-        print(f"Error while loading: {e}")
+        print(f"Erreur: {e}")
         return None
 
 def demander_nom_fichier(screen):

@@ -3,6 +3,11 @@ import pygame
 import save
 import fonctions_base
 import time
+import matplotlib
+matplotlib.use("TkAgg")  # Utiliser un backend compatible
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import threading
 
 screen = pygame.display.set_mode((1000, 800))
 
@@ -68,74 +73,22 @@ def appliquer_regles_optimise(grille, regles):
 
     return nouvelle_grille
 
-
-def boucle_jeu_optimisé_ancien(taille_grille, regles):
-
-            grille = np.zeros((taille_grille, taille_grille), dtype=int)
-            auto_mode = False
-            clock = pygame.time.Clock()
-
-            taille_cellule = 800 // taille_grille
-
-            while True:
-                screen.fill(fonctions_base.COULEUR_FOND)
-
-                # Dessiner la grille
-                fonctions_base.dessiner_grille(screen, grille, taille_cellule)
-
-                boutons = []
-                bouton_reset = pygame.Rect(850, 50, 140, 50)
-                bouton_step = pygame.Rect(850, 100, 140, 50)
-                bouton_auto = pygame.Rect(850, 150, 140, 50)
-                bouton_random = pygame.Rect(850, 200, 140, 50)
-                bouton_quitter = pygame.Rect(850, 250, 140, 50)
-
-                boutons.extend(
-                    [("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random),
-                     ("quitter", bouton_quitter)])
-
-                for nom, bouton in boutons:
-                    texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
-                    fonctions_base.dessiner_bouton(screen, bouton, texte, bouton.collidepoint(pygame.mouse.get_pos()))
-
-                pygame.display.flip()
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        return
-                    elif event.type == pygame.MOUSEBUTTONDOWN:
-                        if event.button == 1:
-                            for nom, bouton in boutons:
-                                if bouton.collidepoint(event.pos):
-                                    if nom == "reset":
-                                        grille = np.zeros((taille_grille, taille_grille), dtype=int)
-                                    elif nom == "step":
-                                        grille = appliquer_regles_optimise(grille, regles)
-                                    elif nom == "auto":
-                                        auto_mode = not auto_mode
-                                    elif nom == "random":
-                                        grille = np.random.randint(2, size=(taille_grille, taille_grille))
-                                    elif nom == "quitter":
-                                        return
-                        x, y = event.pos
-                        if x < 800 and y < 800:
-                            x //= taille_cellule
-                            y //= taille_cellule
-                            grille[x, y] = 1 - grille[x, y]
-
-                if auto_mode:
-                    grille = appliquer_regles_optimise(grille, regles)
-                    pygame.time.delay(300)
-
-                clock.tick(60)
+# Optimisation pour une grille sup à 100
 
 # Fonction principale du jeu
-def boucle_jeu_optimisé(taille_grille, regles):
+def boucle_jeu_optimisé(taille_grille, regles, cellules_vivantes=None, still_lifes_data=None):
     taille_cellule = 800 // taille_grille
     grille = np.zeros((taille_grille, taille_grille), dtype=int)
     running = True
     auto_mode = False
     clock = pygame.time.Clock()
+
+    # Initialiser les données pour le graphe évolutif
+    if cellules_vivantes is None:
+        cellules_vivantes = []
+    if still_lifes_data is None:
+        still_lifes_data = []
+
 
     while running:
         screen.fill(fonctions_base.COULEUR_FOND)
@@ -166,12 +119,18 @@ def boucle_jeu_optimisé(taille_grille, regles):
                     for nom, bouton in boutons:
                         if bouton.collidepoint(event.pos):
                             if nom == "reset":
-                                grille = np.zeros((taille_grille, taille_grille), dtype=int)
+                                grille.fill(0)
+                                cellules_vivantes.clear()
+                                still_lifes_data.clear()
                             elif nom == "step":
                                 grille = appliquer_regles_optimise(grille, regles)
                                 duree, grille = mesurer_temps_execution(grille, regles)
                                 afficher_popup(screen, duree)
                                 print(f"Temps pour cette étape : {duree:.6f} secondes")
+
+                                grille = fonctions_base.appliquer_regles(grille, regles)
+                                #cellules_vivantes.append(compter_cellules_vivantes(grille))
+                                #still_lifes_data.append(analyser_still_lifes(grille))
                             elif nom == "auto":
                                 auto_mode = not auto_mode
                             elif nom == "save":
@@ -195,21 +154,21 @@ def boucle_jeu_optimisé(taille_grille, regles):
         clock.tick(60)
 
 # Fonction principale du jeu avec sauvegarde chargée
-def boucle_jeu_optimisé_load(grille, regles):
+def boucle_jeu_optimisé_load(grille, regles, cellules_vivantes, still_lifes_date):
     taille_grille = grille.shape[0]  # Taille de la grille déjà chargée
     taille_cellule = 800 // taille_grille  # Calcul de la taille de chaque cellule
 
-    if grille is None:
-        print("Erreur lors du chargement de la grille.")
-        return "quit"
+
 
     running = True
     auto_mode = False
     clock = pygame.time.Clock()
 
+
+
     while running:
         screen.fill(fonctions_base.COULEUR_FOND)
-        fonctions_base.dessiner_grille(screen, grille, taille_cellule)  # Dessiner la grille
+        fonctions_base.dessiner_grille(screen, grille, taille_cellule)
 
         # Afficher boutons de contrôle
         boutons = []
@@ -238,32 +197,47 @@ def boucle_jeu_optimisé_load(grille, regles):
                     for nom, bouton in boutons:
                         if bouton.collidepoint(event.pos):
                             if nom == "reset":
-                                grille = np.zeros((taille_grille, taille_grille), dtype=int)
+                                grille.fill(0)
+                                #cellules_vivantes.clear()
+                                #still_lifes_data.clear()
                             elif nom == "step":
-                                grille = appliquer_regles_optimise(grille, regles)
+                                grille = fonctions_base.appliquer_regles(grille, regles)
                                 duree, grille = mesurer_temps_execution(grille, regles)
                                 afficher_popup(screen, duree)
                                 print(f"Temps pour cette étape : {duree:.6f} secondes")
+
+                                #grille = appliquer_regles(grille, regles)
+                                #cellules_vivantes.append(compter_cellules_vivantes(grille))
+                                #still_lifes_data.append(analyser_still_lifes(grille))
                             elif nom == "auto":
                                 auto_mode = not auto_mode
+                            elif nom == "random":
+                                grille = np.random.randint(2, size=(taille_grille, taille_grille))
+                                #cellules_vivantes.append(compter_cellules_vivantes(grille))
+                                #still_lifes_data.append(analyser_still_lifes(grille))
                             elif nom == "save":
                                 nom_fichier = save.demander_nom_fichier(screen)
                                 if nom_fichier:
                                     save.save_game(nom_fichier + ".json", grille, regles)
-                            elif nom == "random":
-                                grille = np.random.randint(2, size=(taille_grille, taille_grille))
                             elif nom == "quitter":
                                 return fonctions_base.afficher_accueil()
                 x, y = event.pos
-                if x < 800 and y < 800:  # Clic dans la grille
+                if x < 800 and y < 800:  # Clic à l'intérieur de la grille
                     x //= taille_cellule
                     y //= taille_cellule
-                    grille[x, y] = 1 - grille[x, y]
+                    grille[x, y] = 1 - grille[x, y]  # Basculer l'état de la cellule entre 0 et 1
 
         if auto_mode:
             grille = appliquer_regles_optimise(grille, regles)
+            #cellules_vivantes.append(compter_cellules_vivantes(grille))
+            #still_lifes_data.append(analyser_still_lifes(grille))
             pygame.time.delay(300)
 
         clock.tick(60)
+
+
+
+
+
 
 
