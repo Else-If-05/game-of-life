@@ -39,6 +39,8 @@ def afficher_popup(fenetre, temps):
     # Délai pour fermer la pop-up après 2 secondes
     pygame.time.delay(500)
 
+
+# Optimisé pour ne traiter que les cellules pertinentes (vivantes et leurs voisins), économisant ainsi des ressources
 def appliquer_regles_optimise(grille, regles):
 
     # Trouver toutes les cellules vivantes
