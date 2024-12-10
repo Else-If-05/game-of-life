@@ -16,6 +16,7 @@ COULEUR_TEXTE = (0, 0, 0)
 # Fonts
 font = pygame.font.Font(None, 48)
 
+
 # Classes for structures
 class Constant:
     Constant_color = (0, 0, 200)  # Blue
@@ -70,6 +71,7 @@ class Constant:
         return [[0, 1, 0],
                 [1, 0, 1],
                 [0, 1, 0]]
+
 
 class Oscillator:
     Oscillator_color = (200, 0, 0)  # Red
@@ -143,6 +145,7 @@ class Oscillator:
                 [1, 0, 0, 0, 1],
                 [0, 1, 1, 1, 0]]
 
+
 class Ship:
     Ship_color = (0, 200, 0)  # Green
 
@@ -151,56 +154,77 @@ class Ship:
         self.case_y = case_y
         self.color = Ship.Ship_color
         self.value = 0
+        self.phase = 0
 
     def move(self, max_x, max_y):
-        matrix = self.get_matrix()
-        matrix_height = len(matrix)
-        matrix_width = len(matrix[0])
-
-        # Move the ship downwards
         self.case_y = (self.case_y + 1) % max_y  # Wrap around vertically
 
     def get_position(self):
         return self.case_x, self.case_y
 
     def get_matrix(self):
+        self.phase += 1
+        if self.phase >= 8: self.phase = 0
+        print(self.phase)
+
         if self.value == 0:
-            return self.get_glider()
+            return self.get_glider(self.phase)
         elif self.value == 1:
-            return self.get_light_weight_ship()
+            return self.get_light_weight_ship(self.phase)
         elif self.value == 2:
-            return self.get_middle_weight_ship()
+            return self.get_middle_weight_ship(self.phase)
         elif self.value == 3:
-            return self.get_heavy_weight_ship()
+            return self.get_heavy_weight_ship(self.phase)
 
     @staticmethod
-    def get_glider():
+    def get_glider(phase):
         return [[0, 0, 1],
                 [1, 0, 1],
                 [0, 1, 1]]
 
     @staticmethod
-    def get_light_weight_ship():
+    def get_light_weight_ship(phase):
         return [[0, 1, 1, 1, 1],
                 [1, 0, 0, 0, 1],
                 [0, 0, 0, 0, 1],
                 [1, 0, 0, 1, 0]]
 
     @staticmethod
-    def get_middle_weight_ship():
-        return [[0, 0, 1, 0, 0, 0],
-                [1, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 1],
-                [0, 1, 1, 1, 1, 1]]
+    def get_middle_weight_ship(phase):
+        if phase < 2:
+            return [[0, 0, 1, 0, 0, 0],
+                    [1, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 0, 1],
+                    [0, 1, 1, 1, 1, 1]]
+        if phase < 4:
+            return [[0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 1, 1, 0],
+                    [0, 1, 1, 1, 1, 1],
+                    [1, 1, 0, 1, 1, 1],
+                    [1, 1, 1, 0, 0, 0]]
+        if phase < 6:
+            return [[0, 1, 1, 1, 1, 1],
+                    [1, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 0],
+                    [0, 0, 1, 0, 0, 0]]
+        else:
+            return [[0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 0, 0, 0],
+                    [1, 1, 0, 1, 1, 1],
+                    [0, 1, 1, 1, 1, 1],
+                    [0, 0, 1, 1, 1, 0]]
+
 
     @staticmethod
-    def get_heavy_weight_ship():
+    def get_heavy_weight_ship(phase):
         return [[0, 0, 1, 1, 0, 0, 0],
                 [1, 0, 0, 0, 0, 1, 0],
                 [0, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 1],
                 [0, 1, 1, 1, 1, 1, 1]]
+
 
 def spawn_random_structure(max, x, y, key):
     if key == pygame.K_a:
@@ -262,6 +286,7 @@ def spawn_random_structure(max, x, y, key):
 
     return None
 
+
 def update_structures(structures, max_x, max_y):
     for structure in structures:
         if isinstance(structure, Oscillator):
@@ -271,9 +296,9 @@ def update_structures(structures, max_x, max_y):
             structure.move(max_x, max_y)
 
 
-
 #avec structure
-def dessiner_grille(fenetre, grille, taille_cellule, scale_factor, taille_grille, deplacement_x, deplacement_y, structures):
+def dessiner_grille(fenetre, grille, taille_cellule, scale_factor, taille_grille, deplacement_x, deplacement_y,
+                    structures):
     offset_x = ((800 - taille_grille * taille_cellule * scale_factor) / 2) + deplacement_x
     offset_y = ((800 - taille_grille * taille_cellule * scale_factor) / 2) + deplacement_y
 
@@ -304,7 +329,6 @@ def dessiner_grille(fenetre, grille, taille_cellule, scale_factor, taille_grille
                     pygame.draw.rect(fenetre, structure.color, rect)
 
 
-
 def placer_structure_dans_grille(grille, structure):
     x, y = structure.get_position()
     matrix = structure.get_matrix()
@@ -313,6 +337,7 @@ def placer_structure_dans_grille(grille, structure):
             if cell == 1:
                 if 0 <= x + j < grille.shape[0] and 0 <= y + i < grille.shape[1]:
                     grille[x + j, y + i] = 1
+
 
 def boucle_jeu(taille_grille, regles):
     taille_cellule = 800 // taille_grille
@@ -355,14 +380,16 @@ def boucle_jeu(taille_grille, regles):
             grille = fonctions_base.appliquer_regles(grille_temp, regles)
             pygame.time.delay(300)
 
-        dessiner_grille(screen, grille, taille_cellule, scale_factor, taille_grille, deplacement_x, deplacement_y, structures)
+        dessiner_grille(screen, grille, taille_cellule, scale_factor, taille_grille, deplacement_x, deplacement_y,
+                        structures)
 
         boutons = []
         bouton_random = pygame.Rect(850, 50, 140, 50)
         bouton_reset = pygame.Rect(850, 120, 140, 50)
         bouton_step = pygame.Rect(850, 230, 140, 50)
         bouton_auto = pygame.Rect(850, 300, 140, 50)
-        boutons.extend([("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random)])
+        boutons.extend(
+            [("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random)])
 
         for nom, bouton in boutons:
             texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
@@ -396,7 +423,8 @@ def boucle_jeu(taille_grille, regles):
                     grille[x, y] = 1 - grille[x, y]
 
             elif event.type == pygame.KEYDOWN:
-                if event.key in [pygame.K_a, pygame.K_b, pygame.K_c, pygame.K_d, pygame.K_e, pygame.K_f, pygame.K_g, pygame.K_h, pygame.K_i, pygame.K_j, pygame.K_k, pygame.K_l, pygame.K_m, pygame.K_n]:
+                if event.key in [pygame.K_a, pygame.K_b, pygame.K_c, pygame.K_d, pygame.K_e, pygame.K_f, pygame.K_g,
+                                 pygame.K_h, pygame.K_i, pygame.K_j, pygame.K_k, pygame.K_l, pygame.K_m, pygame.K_n]:
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     offset_x = ((800 - taille_grille * taille_cellule * scale_factor) / 2) + deplacement_x
                     offset_y = ((800 - taille_grille * taille_cellule * scale_factor) / 2) + deplacement_y
@@ -409,7 +437,6 @@ def boucle_jeu(taille_grille, regles):
                             structures.append(structure)
 
         clock.tick(60)
-
 
 
 if __name__ == "__main__":
