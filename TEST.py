@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import threading
 import time
-import optimisation
-
+import fonctions_base
 
 # Initialiser Pygame
 pygame.init()
@@ -390,15 +389,14 @@ def boucle_jeu(taille_grille, regles, cellules_vivantes=None, still_lifes_data=N
         dessiner_grille(screen, grille, taille_cellule)
 
         # Afficher boutons de contrôle
-        boutons = []
-        bouton_random = pygame.Rect(850, 60, 140, 50)
-        bouton_reset = pygame.Rect(850, 120, 140, 50)
-        bouton_step = pygame.Rect(850, 180, 140, 50)
-        bouton_auto = pygame.Rect(850, 240, 140, 50)
-        bouton_quitter = pygame.Rect(850, 300, 140, 50)
-        bouton_save = pygame.Rect(850, 360, 140, 50)
-
-        boutons.extend([("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random), ("quitter", bouton_quitter), ("save", bouton_save)])
+        boutons = [
+            ("reset", pygame.Rect(850, 50, 140, 50)),
+            ("step", pygame.Rect(850, 100, 140, 50)),
+            ("auto", pygame.Rect(850, 150, 140, 50)),
+            ("random", pygame.Rect(850, 200, 140, 50)),
+            ("save", pygame.Rect(850, 250, 140, 50)),
+            ("quit", pygame.Rect(850, 300, 140, 50)),
+        ]
 
         for nom, bouton in boutons:
             texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
@@ -418,11 +416,6 @@ def boucle_jeu(taille_grille, regles, cellules_vivantes=None, still_lifes_data=N
                                 cellules_vivantes.clear()
                                 still_lifes_data.clear()
                             elif nom == "step":
-                                grille = optimisation.appliquer_regles_optimise(grille, regles)
-                                duree, grille = optimisation.mesurer_temps_execution(grille, regles)
-                                optimisation.afficher_popup(screen, duree)
-                                print(f"Temps pour cette étape : {duree:.6f} secondes")
-
                                 grille = appliquer_regles(grille, regles)
                                 cellules_vivantes.append(compter_cellules_vivantes(grille))
                                 still_lifes_data.append(analyser_still_lifes(grille))
@@ -437,8 +430,9 @@ def boucle_jeu(taille_grille, regles, cellules_vivantes=None, still_lifes_data=N
                                 if nom_fichier:
                                     save.save_game(nom_fichier + ".json", grille, regles)
 
-                            elif nom == "quitter":
+                            elif nom == "quit":
                                 return afficher_accueil()
+
                 x, y = event.pos
                 if x < 800 and y < 800:  # Clic dans la grille
                     x //= taille_cellule
@@ -472,18 +466,15 @@ def boucle_jeu_load(grille, regles, cellules_vivantes, still_lifes_data):
         screen.fill(COULEUR_FOND)
         dessiner_grille(screen, grille, taille_cellule)
 
-        # Afficher boutons de contrôle
-        boutons = []
-        bouton_random = pygame.Rect(850, 60, 140, 50)
-        bouton_reset = pygame.Rect(850, 120, 140, 50)
-        bouton_step = pygame.Rect(850, 180, 140, 50)
-        bouton_auto = pygame.Rect(850, 240, 140, 50)
-        bouton_quitter = pygame.Rect(850, 300, 140, 50)
-        bouton_save = pygame.Rect(850, 360, 140, 50)
-
-        boutons.extend(
-            [("reset", bouton_reset), ("step", bouton_step), ("auto", bouton_auto), ("random", bouton_random),
-             ("quitter", bouton_quitter), ("save", bouton_save)])
+        # Afficher les boutons de contrôle
+        boutons = [
+            ("reset", pygame.Rect(850, 50, 140, 50)),
+            ("step", pygame.Rect(850, 100, 140, 50)),
+            ("auto", pygame.Rect(850, 150, 140, 50)),
+            ("random", pygame.Rect(850, 200, 140, 50)),
+            ("save", pygame.Rect(850, 250, 140, 50)),
+            ("quit", pygame.Rect(850, 300, 140, 50)),
+        ]
 
         for nom, bouton in boutons:
             texte = "Auto: ON" if auto_mode and nom == "auto" else nom.capitalize()
@@ -504,11 +495,6 @@ def boucle_jeu_load(grille, regles, cellules_vivantes, still_lifes_data):
                                 still_lifes_data.clear()
                             elif nom == "step":
                                 grille = appliquer_regles(grille, regles)
-                                duree, grille = optimisation.mesurer_temps_execution(grille, regles)
-                                optimisation.afficher_popup(screen, duree)
-                                print(f"Temps pour cette étape : {duree:.6f} secondes")
-
-                                grille = appliquer_regles(grille, regles)
                                 cellules_vivantes.append(compter_cellules_vivantes(grille))
                                 still_lifes_data.append(analyser_still_lifes(grille))
                             elif nom == "auto":
@@ -521,8 +507,11 @@ def boucle_jeu_load(grille, regles, cellules_vivantes, still_lifes_data):
                                 nom_fichier = save.demander_nom_fichier(screen)
                                 if nom_fichier:
                                     save.save_game(nom_fichier + ".json", grille, regles)
-                            elif nom == "quitter":
+
+                            elif nom == "quit":
                                 return afficher_accueil()
+
+                # Basculer l'état de la cellule lors du clic sur la grille
                 x, y = event.pos
                 if x < 800 and y < 800:  # Clic à l'intérieur de la grille
                     x //= taille_cellule
@@ -536,6 +525,7 @@ def boucle_jeu_load(grille, regles, cellules_vivantes, still_lifes_data):
             pygame.time.delay(300)
 
         clock.tick(60)
+
 
 # Programme principal
 if __name__ == "__main__":
@@ -564,8 +554,6 @@ if __name__ == "__main__":
             # Initialisation pour une nouvelle partie
             cellules_vivantes = []  # Liste pour l'évolution des cellules vivantes
             still_lifes_data = []  # Liste pour l'évolution des structures still lifes
-            if TAILLE_GRILLE > 100 :
-                optimisation.boucle_jeu_optimisé(TAILLE_GRILLE, REGLES)
             boucle_jeu(TAILLE_GRILLE, REGLES, cellules_vivantes, still_lifes_data)
 
         elif action == "load_game":
@@ -576,16 +564,9 @@ if __name__ == "__main__":
                 result = save.load_game(nom_fichier + ".json")
                 if result:
                     grille, regles = result
-                    TAILLE_GRILLE = grille.shape[0]
-                    if TAILLE_GRILLE > 100:
-                        optimisation.boucle_jeu_optimisé_load(grille, regles)
-
                     boucle_jeu_load(grille, regles, cellules_vivantes,still_lifes_data)  # Lancer le jeu avec les données chargées
             else:
                 print("Nom de fichier non valide.")
 
         elif action == "quit":
-            continue
-
-
-
+                continue

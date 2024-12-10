@@ -463,7 +463,10 @@ def boucle_jeu_load(grille, regles, cellules_vivantes, still_lifes_data):
     auto_mode = False
     clock = pygame.time.Clock()
 
-
+    # Lancer le thread pour les graphiques évolutifs
+    threading.Thread(
+        target=afficher_graphes_evolutifs, args=(cellules_vivantes, still_lifes_data), daemon=True
+    ).start()
 
     while running:
         screen.fill(COULEUR_FOND)
