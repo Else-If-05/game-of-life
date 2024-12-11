@@ -389,8 +389,8 @@ def boucle_jeu(taille_grille, regles):
 
         # Place structures in the grid
         grille_temp = grille.copy()
-        for structure in structures:
-            placer_structure_dans_grille(grille_temp, structure)
+        #for structure in structures:
+           # placer_structure_dans_grille(grille_temp, structure)
 
         # Apply rules to the entire grid including structures
         if auto_mode:
