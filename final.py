@@ -1,3 +1,6 @@
+#"""""Code sans structures complexes """"
+# Checker lea.py pour structures complexes
+
 import pygame
 import sys
 import numpy as np
