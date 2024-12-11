@@ -45,14 +45,15 @@ def afficher_popup(fenetre, temps):
     pygame.time.delay(500)
 
 
-# Optimisé pour ne traiter que les cellules pertinentes (vivantes et leurs voisins), économisant ainsi des ressources
+#optimisé pour ne traiter que les cellules pertinentes (vivantes et leurs voisins), économisant ainsi des ressources
 def appliquer_regles_optimise(grille, regles):
 
-    # Trouver toutes les cellules vivantes
+    #trouver toutes les cellules vivantes
     vivantes = np.argwhere(grille == 1)
+    #eviter les doublons
     a_verifier = set()
 
-    # Ajouter les cellules vivantes et leurs voisins à la liste à vérifier
+    #ajouter les cellules vivantes et leurs voisins à la liste à vérifier
     for x, y in vivantes:
         a_verifier.add((x, y))
         for dx, dy in [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]:
@@ -63,11 +64,11 @@ def appliquer_regles_optimise(grille, regles):
     for x, y in a_verifier:
         voisins_vivants = fonctions_base.compter_voisins(grille, x, y)
         if grille[x, y] == 1:
-            # Cellule vivante, vérifier si elle survit
+            #cellule vivante, vérifier si elle survit
             if voisins_vivants < regles['min_vivants'] or voisins_vivants > regles['max_vivants']:
                 nouvelle_grille[x, y] = 0
         else:
-            # Cellule morte, vérifier si elle revient à la vie
+            #cellule morte, vérifier si elle revient à la vie
             if voisins_vivants == regles['revient_a_la_vie']:
                 nouvelle_grille[x, y] = 1
 
