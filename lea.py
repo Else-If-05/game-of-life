@@ -1,3 +1,5 @@
+#"""""Code avec structures complexes """"
+
 import fonctions_base
 import pygame
 import numpy as np
@@ -381,9 +383,9 @@ def boucle_jeu(taille_grille, regles):
             deplacement_x += 10
         if keys[pygame.K_RIGHT]:
             deplacement_x -= 10
-        if keys[pygame.K_KP_PLUS]:
+        if keys[pygame.K_F1]:
             scale_factor *= 1.02
-        if keys[pygame.K_KP_MINUS]:
+        if keys[pygame.K_F2]:
             scale_factor = max(1, scale_factor / 1.02)
 
 
