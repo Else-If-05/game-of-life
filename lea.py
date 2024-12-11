@@ -181,52 +181,16 @@ class Ship:
         self.phase = (self.phase + 1) % 8  # Passe à la phase suivante
 
     def move(self, max_x, max_y, reset_threshold=3):
-        """
-        Déplace le vaisseau sur la grille. Si le vaisseau s'approche des bords
-        à une distance égale ou inférieure à reset_threshold, il est réinitialisé
-        à la position opposée sur la grille.
+        self.case_x = (self.case_x + 1) % max_x  # Mouvement horizontal
+        self.case_y = (self.case_y + 1) % max_y  # Mouvement vertical
 
-        :param max_x: Taille maximale en X de la grille.
-        :param max_y: Taille maximale en Y de la grille.
-        :param reset_threshold: Distance au bord avant réinitialisation.
-        """
-        # Effacer la position actuelle du ship de la grille
-        matrix = self.get_matrix()
-        for i, row in enumerate(matrix):
-            for j, cell in enumerate(row):
-                if cell == 1:
-                    if 0 <= self.case_x + i < max_x and 0 <= self.case_y + j < max_y:
-                        self.grid[self.case_x + i][self.case_y + j] = 0
-
-        # Vérifier si le vaisseau s'approche des limites et réinitialiser à l'opposé
-        if max_x - self.case_x-3 <= reset_threshold:  # Proche du bord droit
-            self.case_x = reset_threshold  # Reposition à gauche
-        elif self.case_x < reset_threshold:  # Proche du bord gauche
-            self.case_x = max_x - reset_threshold  # Reposition à droite
-
-        if max_y - self.case_y-3 <= reset_threshold:  # Proche du bord bas
-            self.case_y = reset_threshold  # Reposition en haut
-        elif self.case_y < reset_threshold:  # Proche du bord haut
-            self.case_y = max_y - reset_threshold  # Reposition en bas
-        else:
-            # Mise à jour classique du mouvement
-            self.case_x = (self.case_x + 1) % max_x  # Mouvement horizontal
-            self.case_y = (self.case_y + 1) % max_y  # Mouvement vertical
-
-        # Dessiner la nouvelle position du ship sur la grille
-        matrix = self.get_matrix()
-        for i, row in enumerate(matrix):
-            for j, cell in enumerate(row):
-                if cell == 1:
-                    if 0 <= self.case_x + i < max_x and 0 <= self.case_y + j < max_y:
-                        self.grid[self.case_x + i][self.case_y + j] = 1
 
     def get_position(self):
         return self.case_x, self.case_y
 
     def get_matrix(self):
         """Récupère la matrice correspondant à la phase actuelle."""
-        self.phase += 1
+        #self.phase += 1
         if self.phase >= 8:  # 8 est le nombre maximum de phases (modifiable)
             self.phase = 0
 
@@ -374,10 +338,13 @@ def dessiner_grille(fenetre, grille, taille_cellule, scale_factor, taille_grille
         for i, row in enumerate(matrix):
             for j, cell in enumerate(row):
                 if cell == 1:
-                    rect = pygame.Rect(offset_x + (ship_x + j) * taille_cellule * scale_factor,
-                                       offset_y + (ship_y + i) * taille_cellule * scale_factor,
+                    corrected_x = (ship_x + j) % grille.shape[0]
+                    corrected_y = (ship_y + i) % grille.shape[1]
+                    rect = pygame.Rect(offset_x + corrected_x * taille_cellule * scale_factor,
+                                       offset_y + corrected_y * taille_cellule * scale_factor,
                                        taille_cellule * scale_factor,
                                        taille_cellule * scale_factor)
+
                     pygame.draw.rect(fenetre, structure.color, rect)
 
 
@@ -419,8 +386,6 @@ def boucle_jeu(taille_grille, regles):
         if keys[pygame.K_KP_MINUS]:
             scale_factor = max(1, scale_factor / 1.02)
 
-        # Update structures
-        update_structures(structures, taille_grille, taille_grille)
 
         # Place structures in the grid
         grille_temp = grille.copy()
@@ -430,6 +395,8 @@ def boucle_jeu(taille_grille, regles):
         # Apply rules to the entire grid including structures
         if auto_mode:
             grille = fonctions_base.appliquer_regles(grille_temp, regles)
+            # Update structures
+            update_structures(structures, taille_grille, taille_grille)
             pygame.time.delay(300)
 
         dessiner_grille(screen, grille, taille_cellule, scale_factor, taille_grille, deplacement_x, deplacement_y,
@@ -460,7 +427,10 @@ def boucle_jeu(taille_grille, regles):
                                 grille = np.zeros((taille_grille, taille_grille), dtype=int)
                                 structures.clear()
                             elif nom == "step":
+                                # Update structures
+                                update_structures(structures, taille_grille, taille_grille)
                                 grille = fonctions_base.appliquer_regles(grille_temp, regles)
+
                             elif nom == "auto":
                                 auto_mode = not auto_mode
                             elif nom == "random":
