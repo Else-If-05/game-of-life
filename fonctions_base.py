@@ -1,5 +1,7 @@
 import pygame
 import sys
+import numpy as np
+
 
 # Initialiser Pygame
 pygame.init()
@@ -19,6 +21,27 @@ font = pygame.font.Font(None, 48)
 font_small = pygame.font.Font(None, 36)
 
 screen = pygame.display.set_mode((1000, 800))
+
+# Modèles pour les "Still lifes"
+STILL_LIFES = {
+    "Block": np.array([[1, 1],
+                       [1, 1]]),
+    "Beehive": np.array([[0, 1, 1, 0],
+                         [1, 0, 0, 1],
+                         [0, 1, 1, 0]]),
+    "Loaf": np.array([[0, 1, 1, 0],
+                      [1, 0, 0, 1],
+                      [0, 1, 0, 1],
+                      [0, 0, 1, 0]]),
+    "Boat": np.array([[1, 1, 0],
+                      [1, 0, 1],
+                      [0, 1, 0]]),
+    "Tub": np.array([[0, 1, 0],
+                     [1, 0, 1],
+                     [0, 1, 0]])
+}
+
+
 
 def demander_regles(fenetre):
     input_boxes = [
@@ -93,7 +116,6 @@ def dessiner_bouton(fenetre, rect, texte, survole):
     texte_surface = font.render(texte, True, COULEUR_TEXTE)
     texte_rect = texte_surface.get_rect(center=rect.center)
     fenetre.blit(texte_surface, texte_rect)
-
 
 def afficher_accueil():
     boutons = [
